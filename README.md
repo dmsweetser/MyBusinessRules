@@ -1,6 +1,8 @@
 # My Business Rules
 
-## Empowering business users to manage their own rules
+### Empowering business users to manage their own rules
+
+![logo](https://github.com/dmsweetser/MyBusinessRules/assets/37463869/59b788b4-84a5-4693-80a9-77bbd353882b)
 
 Do you want to empower your business users to create and manage their own rules without depending on developers? My Business Rules! is the solution you need. Our application lets you define your business rules in a simple and intuitive way, using natural language and graphical interfaces. You can also test and validate your rules before enabling them in your production environment.
 
