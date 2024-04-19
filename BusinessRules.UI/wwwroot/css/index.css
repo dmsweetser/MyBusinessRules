@@ -1,0 +1,128 @@
+.auth-links {
+    position: fixed;
+    top: 10px;
+    right: 2vw;
+    display: flex;
+    z-index: 9998;
+}
+
+    .auth-links a {
+        color: white;
+        background: #507e54;
+        padding: 0.5rem 1rem;
+        border-radius: 10px;
+        margin-left: 0.5rem;
+        text-decoration: none;
+    }
+
+.demo-link {
+    position: fixed;
+    top: 10px;
+    left: 2vw;
+    display: flex;
+    z-index: 9998;
+}
+
+    .demo-link a {
+        color: white;
+        background: #507e54;
+        padding: 0.5rem 1rem;
+        border-radius: 10px;
+        margin-left: 0.5rem;
+        text-decoration: none;
+    }
+
+.hero {
+    height: 100vh;
+    background: url('../images/background.jpg') no-repeat center center / cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .hero h1 {
+        color: white;
+        font-size: 5rem;
+        text-shadow: 8px 8px 16px rgba(0,0,0,0.9);
+    }
+
+    .hero h3 {
+        color: white;
+        font-size: 2rem;
+        text-shadow: 8px 8px 16px rgba(0,0,0,0.9);
+    }
+
+/* What is this and why do I need it? section */
+.what-and-why {
+    padding: 2rem 0;
+    background: #e6f2e6;
+}
+
+    .what-and-why h2 {
+        margin-bottom: 3rem;
+        color: #507e54;
+    }
+
+    .what-and-why p {
+        font-size: 1.2rem;
+    }
+
+    .what-and-why ul {
+        list-style-type: disc;
+        margin-left: 2rem;
+    }
+
+    .what-and-why li {
+        font-size: 1.2rem;
+        margin-bottom: 0.5rem;
+    }
+
+.features {
+    padding: 4rem 0;
+    background: #f8f9fa;
+}
+
+    .features h2 {
+        margin-bottom: 3rem;
+        color: #507e54;
+    }
+
+    .features .card {
+        border: none;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .features .card-body {
+        padding: 2rem;
+    }
+
+    .features .card-title {
+        font-size: 1.5rem;
+        color: #507e54;
+    }
+
+    .features .card-text {
+        font-size: 1.2rem;
+    }
+
+.cta {
+    padding: 4rem 0;
+    background: #343a40;
+    color: white;
+}
+
+    .cta h2 {
+        margin-bottom: 3rem;
+    }
+
+    .cta p {
+        font-size: 1.2rem;
+    }
+
+    .cta button {
+        background: #507e54;
+        border: none;
+        padding: 1rem 2rem;
+        font-size: 1.2rem;
+        border-radius: 10px;
+    }

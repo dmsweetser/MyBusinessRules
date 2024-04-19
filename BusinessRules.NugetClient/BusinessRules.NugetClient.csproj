@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageId>MyBusinessRules.MyBusinessRulesClient</PackageId>
+    <Title>My Business Rules Client</Title>
+    <Authors>dmsweetser</Authors>
+    <Description>My Business Rules Client allows you to execute business rules for a provided object using https://www.mybizrules.com. Business rules are designed to be easily configured by a business user, so that you can maintain the framework and let subject matter experts in your company manage the business logic themselves. In order to use the API, you need to register on the site first.</Description>
+    <Copyright>© 2023 Daniel Sweetser. All rights reserved.</Copyright>
+    <PackageProjectUrl>https://www.mybizrules.com</PackageProjectUrl>
+    <Company>My Business Rules</Company>
+    <Product>My Business Rules Client</Product>
+    <PackageIcon>logo.png</PackageIcon>
+    <PackageLicenseFile>License.txt</PackageLicenseFile>
+    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+    <PackageReadmeFile>Readme.md</PackageReadmeFile>
+	<GenerateDocumentationFile>true</GenerateDocumentationFile>
+	<FileVersion></FileVersion>
+	<Version>1.0.6</Version>
+	<Configurations>Debug;Release;DebugOfflineMode;ReleaseOfflineMode</Configurations>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\BusinessRules.UI\wwwroot\images\logo.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="License.txt">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Update="Readme.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+</Project>

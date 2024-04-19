@@ -1,0 +1,32 @@
+﻿@using BusinessRules.Domain.Common;
+@using Microsoft.Extensions.Options;
+@inject IOptions<AppSettings> parsedConfig;
+@{
+    var config = parsedConfig.Value;
+    Layout = null;
+}
+<div class="container">
+    <div class="container">
+        <h1 class="text-center my-5">Discover the Power of My Business Rules</h1>
+        <div class="row">
+            <div class="col-md-6 offset-md-3">
+                <div class="card text-center">
+                    <div class="card-header bg-primary text-white">
+                        <h3>Start for Free, Then Pay as You Go</h3>
+                    </div>
+                    <div class="card-body">
+                        <h3 class="card-title">Pay just $0.99 per 1000 Rule Execution Credits</h3>
+                        <ul class="list-group list-group-flush text-left pricing-ul">
+                            <li class="list-group-item">Rule execution credits allow all your business rules to be run for a provided field</li>
+                            <li class="list-group-item">Each time your application calls our API, a single rule execution credit is used up</li>
+                            <li class="list-group-item">Rule execution credits do not expire</li>
+                            <li class="list-group-item">Sign up now and receive @config.NewCompanyFreeCreditAmount rule execution credits to try us out!</li>
+                            <li class="list-group-item"><strong>Upgrade to a subscription at any time to gain instant access to an on-premises version of My Business Rules that does not require credits</strong></li>
+                        </ul>
+                        <button type="button" class="btn btn-primary" onclick="document.getElementById('signUpModalButton').click();">Get Started</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

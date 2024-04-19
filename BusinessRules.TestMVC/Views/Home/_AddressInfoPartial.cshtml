@@ -1,0 +1,9 @@
+﻿@model AddressInfo
+
+<div class="container shadow m-2 p-2">
+    <h3>Address Info</h3>
+    @Html.EditorFor(x => x.Street)
+    @Html.EditorFor(x => x.City)
+    @Html.EditorFor(x => x.State)
+    @Html.EditorFor(x => x.ZipCode)
+</div>

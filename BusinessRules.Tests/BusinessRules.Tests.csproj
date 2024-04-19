@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <IsPackable>false</IsPackable>
+    <Configurations>Debug;Release;DebugOfflineMode;ReleaseOfflineMode</Configurations>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.7.1" />
+    <PackageReference Include="Moq" Version="4.20.69" />
+    <PackageReference Include="MSTest.TestAdapter" Version="3.1.1" />
+    <PackageReference Include="MSTest.TestFramework" Version="3.1.1" />
+    <PackageReference Include="coverlet.collector" Version="6.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BusinessRules.Data\BusinessRules.Data.csproj" />
+    <ProjectReference Include="..\BusinessRules.Domain\BusinessRules.Domain.csproj" />
+    <ProjectReference Include="..\BusinessRules.Licensing\BusinessRules.Licensing.csproj" />
+    <ProjectReference Include="..\BusinessRules.Rules\BusinessRules.Rules.csproj" />
+    <ProjectReference Include="..\BusinessRules.ServiceLayer\BusinessRules.ServiceLayer.csproj" />
+    <ProjectReference Include="..\BusinessRules.UI\BusinessRules.UI.csproj" />
+  </ItemGroup>
+</Project>

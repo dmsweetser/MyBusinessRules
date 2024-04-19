@@ -1,0 +1,40 @@
+﻿@using BusinessRules.Domain.DTO
+@model SystemViewModel
+
+@{
+    Layout = null;
+}
+
+<div class="row text-center mt-4 mb-2">
+    <h3>
+        Manage Field:
+        <select id="manageFieldSelector" class="fieldList ml-2 mr-2 p-1" onchange="SetVisibleApp(event.target)">
+            <option value="">Please select</option>
+            @foreach (var app in Model.Applications)
+            {
+                <option value="@app.TopLevelField.Id.ToString("N")">@(app.TopLevelField.FriendlyName)</option>
+            }
+            <option value="AddNewTopLevelField">Add New Top Level Field</option>
+        </select>
+    </h3>
+</div>
+<hr />
+
+@for (var i = 0; i < Model.Applications.Count; i++)
+{
+    var currentField = Model.Applications[i].DeveloperDTO.CurrentField;
+    <form method="post" id="developerForm_@(currentField.TopLevelFieldId.ToString("N"))">
+        @await Html.PartialAsync("/Views/Shared/EditorTemplates/BizField.cshtml", currentField)
+    </form>
+}
+
+@* This button should result in a reloaded page, so no components are refreshed individually *@
+<button id="addNewTopLevelField"
+        type="submit"
+        class="btn btn-primary d-none"
+        asp-controller="Field"
+        asp-action="AddNewTopLevelField"
+        onclick="SubmitAndRefreshPartial(event,'', '');">
+    Add New Top Level Field
+</button>
+

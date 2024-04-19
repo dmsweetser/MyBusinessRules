@@ -1,0 +1,388 @@
+﻿@using BusinessRules.Domain.Common;
+@using BusinessRules.Domain.DTO
+@using BusinessRules.Domain.Organization
+@using BusinessRules.Licensing;
+@using Microsoft.Extensions.Options;
+@using Newtonsoft.Json
+@model AdministratorDTO
+@inject IOptions<AppSettings> parsedConfig;
+
+@{
+    var config = parsedConfig.Value;
+    Layout = null;
+}
+
+<form method="post" class="shadow-lg p-1" id="companyForm">
+
+    <script>
+        document.getElementById("companyForm").addEventListener("keydown", function (e) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+            }
+        });
+    </script>
+
+    <div class="container mt-3 shadow p-3 @(FeatureFlags.OfflineMode ? "d-none" : "")">
+        <div class="container form-group row mt-1">
+            <div class="col-sm-3 pt-2 mt-sm-0">
+                <label asp-for="@Model.Name"><strong>Company Name:</strong></label>
+            </div>
+            <div class="col-sm-9 mt-3 mt-sm-0">
+                <input onchange="document.getElementById('saveCompanyNoRefresh').click()" asp-for="@Model.Name" class="form-control" />
+            </div>
+        </div>
+        <div class="container w-100 align-self-center justify-content-center d-flex">
+            <button type="submit"
+                    class="btn btn-primary w-100  ml-sm-5 mr-sm-5"
+                    asp-controller="Company"
+                    asp-action="RemoveCompany"
+                    onclick="ConfirmBeforeExecuting(event, 'Are you sure you want to reset your company? Your existing field and rules will be removed. Please cancel any subscriptions before you proceed.')">
+                Reset Company
+            </button>
+        </div>
+    </div>
+
+    <div class="container mt-3 shadow p-3 @(FeatureFlags.OfflineMode ? "d-none" : "")">
+        <div class="container p-3">
+            <div class="row">
+                <div class="col-sm-2">
+                    <h4>Credits</h4>
+                </div>
+                <div class="col-sm-10">
+                    A single credit is used every time you make a request to execute rules, regardless of how many rules you have to run. You receive @config.NewCompanyFreeCreditAmount free credits when you sign up, and you can subscribe for additional credits based on your needs. With any subscription, you also gain access to an offline version of My Business Rules that you can host in your own Windows environment.
+                </div>
+            </div>
+        </div>
+        <div class="container form-group row mt-1">
+            <div class="col-sm-3 mt-3 mt-sm-0">
+                <label asp-for="@Model.RemainingCredits">Remaining Credits:</label>
+            </div>
+            <div class="col-sm-9 mt-3 mt-sm-0">
+                <input asp-for="@Model.RemainingCredits" type="hidden" />
+                <input asp-for="@Model.RemainingCredits" class="form-control" disabled="disabled" />
+            </div>
+        </div>
+        @if (Model.LastBilledDate > DateTime.MinValue)
+        {
+            <div class="container form-group row mt-1">
+                <div class="col-sm-3 mt-3 mt-sm-0">
+                    <label asp-for="@Model.LastBilledDate">Last Billed Date:</label>
+                </div>
+                <div class="col-sm-9 mt-3 mt-sm-0">
+                    <input asp-for="@Model.LastBilledDate" type="hidden" />
+                    <input asp-for="@Model.LastBilledDate" class="form-control" disabled="disabled" />
+                </div>
+            </div>
+            <div class="container form-group row mt-1">
+                <div class="col-sm-3 mt-3 mt-sm-0">
+                    <label>Manage Billing:</label>
+                </div>
+                <div class="col-sm-9 mt-3 mt-sm-0">
+                    <a href="@Model.BillingUrl">Click Here</a>
+                </div>
+            </div>
+        }
+
+        <div class="container form-group row mt-1">
+            <div class="col-sm-3 mt-3 mt-sm-0">
+                <label>Subscribe For Additional Credits:</label>
+            </div>
+            <div class="col-sm-9 mt-3 mt-sm-0">
+                <a href="@Model.PurchaseUrl">Click Here</a>
+            </div>
+        </div>
+
+        <div class="container form-group row mt-1">
+            <div class="col-sm-3 mt-3 mt-sm-0">
+                <label>Redeem Code:</label>
+            </div>
+            <div class="col-sm-6 mt-3 mt-sm-0">
+                <input id="creditCode" type="text" class="form-control" />
+            </div>
+            <div class="col-sm-3 mt-3 mt-sm-0">
+                <button type="submit"
+                        class="btn btn-primary w-75 ml-sm-5 mr-sm-5"
+                        asp-controller="Company"
+                        asp-action="ApplyCreditCode"
+                        onclick="ApplyCreditCode(event); document.getElementById('saveCompany').click();">
+                    Redeem
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    @for (int i = 0; i < Model.FieldIds.Count; i++)
+    {
+        <input asp-for="@Model.FieldIds[i]" type="hidden" />
+    }
+
+    @for (int i = 0; i < Model.ApiKeyIds.Count; i++)
+    {
+        <input asp-for="@Model.ApiKeyIds[i]" type="hidden" />
+    }
+
+    <div class="container mt-3 shadow p-3 @(FeatureFlags.OfflineMode ? "d-none" : "")">
+        <div class="container align-self-center justify-content-center d-flex">
+            <h5>Users</h5>
+        </div>
+        <div class="container mt-1 w-100 align-self-center justify-content-center d-flex">
+            <button type="submit"
+                    class="btn btn-primary w-100  ml-sm-5 mr-sm-5"
+                    asp-controller="Company"
+                    asp-action="AddNewUser"
+                    onclick="SubmitAndRefreshPartial(event,'forAdmins', 'companyForm')">
+                Add New User
+            </button>
+        </div>
+        @for (int i = 0; i < Model.Users.Count; i++)
+        {
+            <div class="green-border p-2 m-2">
+                <input asp-for="@Model.Users[i].Id" type="hidden" />
+                <div class="container form-group row mt-1">
+                    <div class="col-sm-3 mt-3 mt-sm-0">
+                        <label asp-for="@Model.Users[i].EmailAddress">User Email:</label>
+                    </div>
+                    <div class="col-sm-9 mt-3 mt-sm-0">
+                        <input onchange="document.getElementById('saveCompanyNoRefresh').click()" asp-for="Users[i].EmailAddress" class="form-control" />
+                    </div>
+                </div>
+                <div class="container form-group row">
+                    <div class="col-sm-3 mt-3 mt-sm-0">
+                        <label asp-for="@Model.Users[i].Role">User Role:</label>
+                    </div>
+                    <div class="col-sm-9 mt-3 mt-sm-0">
+                        <select onchange="document.getElementById('saveCompanyNoRefresh').click()" asp-for="Users[i].Role" class="form-select w-auto green-border">
+                            <option value="UserRole.Administrator">Administrator</option>
+                            <option value="UserRole.Developer">Developer</option>
+                            <option value="UserRole.BusinessUser">Business User</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="container w-100 align-self-center justify-content-center d-flex">
+                    <button type="submit"
+                            class="btn btn-primary w-100  ml-sm-5 mr-sm-5"
+                            asp-controller="Company"
+                            asp-action="RemoveUser"
+                            asp-route-userid="@Model.Users[i].EmailAddress"
+                            onclick="ConfirmBeforeExecuting(event, 'Are you sure you want to remove this user? If they are your only administrator, you will lose access.', () => SubmitAndRefreshPartial(event,'forAdmins', 'companyForm'))">
+                        Remove User
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (!FeatureFlags.OfflineMode)
+    {
+        <div class="container mt-3 shadow p-3">
+            <div class="container align-self-center justify-content-center d-flex">
+                <h5>Offline Mode (Windows x64 only)</h5>
+            </div>
+            <div class="container">
+                <strong>Usage Instructions</strong>
+                <ul>
+                    <li>Download and extract the offline version zip file to a server location</li>
+                    <li>Install as an IIS site or application (You can learn more <a href="https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/iis/?view=aspnetcore-7.0" target="_blank">here</a>)</li>
+                    <li>Adjust appsettings.json to have a JsonStorageBasePath that is a valid storage location on the server</li>
+                    <li>Launch the app and begin integrating!</li>
+                    <li>NOTE: User management, dynamic operators and dynamic components are not available in offline mode</li>
+                </ul>
+            </div>
+            @if (new LicenseManager().AllowOfflineMode(Model.LastBilledDate))
+            {
+                <div class="container form-group row mt-1">
+                    <div class="col-sm mt-3 mt-sm-0">
+                        <a target="_blank" href="~/MyBusinessRules_Offline.zip" class="btn btn-primary w-75 ml-sm-5 mr-sm-5">Download Offline Version @(LicenseManager.CurrentVersionNumber)</a>
+                    </div>
+                    <div class="col-sm mt-3 mt-sm-0">
+                        <a target="_blank" href="@Url.Action("DownloadKeyFile", "Company")" class="btn btn-primary w-75 ml-sm-5 mr-sm-5">Download Key File for Version @(LicenseManager.CurrentVersionNumber)</a>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="container align-self-center justify-content-center d-flex">
+                    <strong><i>[To get access to offline mode, just set up any subscription]</i></strong>
+                </div>
+            }
+        </div>
+    }
+
+    <div class="container mt-3 shadow p-3">
+        <div class="container align-self-center justify-content-center d-flex">
+            <h5>Api Keys</h5>
+        </div>
+        <div class="container mt-1 w-100 align-self-center justify-content-center d-flex">
+            <button type="submit"
+                    class="btn btn-primary w-100  ml-sm-5 mr-sm-5"
+                    asp-controller="Company"
+                    asp-action="AddNewApiKey"
+                    onclick="SubmitAndRefreshPartial(event,'forAdmins', 'companyForm')">
+                Add New Api Key
+            </button>
+        </div>
+        @for (int i = 0; i < Model.ApiKeys.Count; i++)
+        {
+            <div class="green-border p-2 m-2">
+                <input asp-for="@Model.ApiKeys[i].Id" type="hidden" />
+                <input asp-for="@Model.ApiKeys[i].CompanyId" type="hidden" />
+                <div class="container form-group row mt-1">
+                    <div class="col-sm-2 mt-3 mt-sm-2">
+                        <label asp-for="ApiKeys[i].Id">Api Key ID</label>
+                    </div>
+                    <div class="col-sm-7 mt-3 mt-sm-0">
+                        <input asp-for="@Model.ApiKeys[i].Id" type="hidden" />
+                        <input asp-for="@Model.ApiKeys[i].Id" class="form-control w-100" disabled="disabled" />
+                    </div>
+                    <div class="col-sm-auto mt-3 mt-sm-0">
+                        <button class="btn btn-primary" onclick="CopyValueToClipboard(event, '@Model.ApiKeys[i].Id')">Copy This</button>
+                    </div>
+                </div>
+                <div class="container form-group row">
+                    <div class="col-sm-2  mt-3 mt-sm-2">
+                        <label asp-for="@Model.ApiKeys[i].TopLevelFieldId">Associated Field?</label>
+                    </div>
+                    <div class="col-sm-10 mt-3 mt-sm-0">
+                        <select onchange="document.getElementById('saveCompanyNoRefresh').click()" asp-for="@Model.ApiKeys[i].TopLevelFieldId" class="form-select w-auto green-border">
+                            @for (int j = 0; j < Model.Fields.Count; j++)
+                            {
+                                <option value="@Model.Fields[j].Id">@Model.Fields[j].FriendlyName</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="container form-group row">
+                    <div class="col-sm-2  mt-3 mt-sm-2">
+                        <label asp-for="@Model.ApiKeys[i].Description">Description</label>
+                    </div>
+                    <div class="col-sm-10 mt-3 mt-sm-0">
+                        <input onchange="document.getElementById('saveCompanyNoRefresh').click()" asp-for="@Model.ApiKeys[i].Description" class="form-control" />
+                    </div>
+                </div>
+
+
+                <div class="container form-group row">
+                    <div class="col-sm-2  mt-3 mt-sm-2">
+                        <label asp-for="@Model.ApiKeys[i].AllowedDomains">Allowed Domains?</label>
+                    </div>
+                    <div class="col-sm-10 mt-3 mt-sm-0">
+                        <input onchange="document.getElementById('saveCompanyNoRefresh').click()" asp-for="@Model.ApiKeys[i].AllowedDomains" class="form-control" placeholder="(Comma-separated, leave blank to permit all)" />
+                    </div>
+                </div>
+
+                <div class="container mt-3 mb-3">
+                    <div class="accordion" id="loggingAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header pl-2 pr-4" id="loggingHeading">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#loggingCollapse" aria-expanded="true" aria-controls="loggingCollapse">
+                                    Logging Configuration (for logging Rule Execution results)
+                                </button>
+                            </h2>
+                            <div id="loggingCollapse" class="accordion-collapse collapse show" aria-labelledby="loggingHeading" data-bs-parent="#loggingAccordion">
+                                <div class="accordion-body">
+
+                                    @if (!FeatureFlags.OfflineMode)
+                                    {
+                                        <div class="container form-group row">
+                                            <div class="col-sm-2 mt-3 mt-sm-2">
+                                                <label asp-for="@Model.ApiKeys[i].FtpsServer">FTPS Server Hostname</label>
+                                            </div>
+                                            <div class="col-sm-10 mt-3 mt-sm-0">
+                                                <input onchange="document.getElementById('saveCompanyNoRefresh').click()" asp-for="@Model.ApiKeys[i].FtpsServer" class="form-control" />
+                                            </div>
+                                        </div>
+                                        <div class="container form-group row">
+                                            <div class="col-sm-2  mt-3 mt-sm-2">
+                                                <label asp-for="@Model.ApiKeys[i].FtpsPort">FTPS Server Port</label>
+                                            </div>
+                                            <div class="col-sm-10 mt-3 mt-sm-0">
+                                                <input onchange="document.getElementById('saveCompanyNoRefresh').click()" asp-for="@Model.ApiKeys[i].FtpsPort" class="form-control" />
+                                            </div>
+                                        </div>
+                                        <div class="container form-group row">
+                                            <div class="col-sm-2 mt-3 mt-sm-2">
+                                                <label asp-for="@Model.ApiKeys[i].FtpsUsername">FTPS Server Username</label>
+                                            </div>
+                                            <div class="col-sm-10 mt-3 mt-sm-0">
+                                                <input onchange="document.getElementById('saveCompanyNoRefresh').click()" asp-for="@Model.ApiKeys[i].FtpsUsername" class="form-control" />
+                                            </div>
+                                        </div>
+                                        <div class="container form-group row">
+                                            <div class="col-sm-2 mt-3 mt-sm-2">
+                                                <label asp-for="@Model.ApiKeys[i].FtpsPassword">FTPS Server Password</label>
+                                            </div>
+                                            <div class="col-sm-10 mt-3 mt-sm-0">
+                                                @{
+                                                    var placeholder =
+                                                    !string.IsNullOrWhiteSpace(Model.ApiKeys[i].FtpsPassword)
+                                                    ? "[Existing Password Hidden - Type To Change]"
+                                                    : "[Please enter a password]";
+                                                }
+                                                <input class="form-control" onchange="document.getElementById('@Html.IdFor(x => x.ApiKeys[i].FtpsPassword)').value = event.target.value; document.getElementById('saveCompany').click()" type="password" placeholder="@(placeholder)" />
+                                            </div>
+                                            <input type="hidden" onchange="document.getElementById('saveCompanyNoRefresh').click()" asp-for="@Model.ApiKeys[i].FtpsPassword" />
+                                        </div>
+                                        <div class="container form-group row">
+                                            <div class="col-sm-2  mt-3 mt-sm-2">
+                                                <label asp-for="@Model.ApiKeys[i].FtpsRemoteDirectory">FTPS Server Remote Directory</label>
+                                            </div>
+                                            <div class="col-sm-10 mt-3 mt-sm-0">
+                                                <input onchange="document.getElementById('saveCompanyNoRefresh').click()" asp-for="@Model.ApiKeys[i].FtpsRemoteDirectory" class="form-control" />
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="container form-group row">
+                                            <div class="col-sm-4  mt-3 mt-sm-2">
+                                                <label asp-for="@Model.ApiKeys[i].LocalLoggingDirectory">Local Logging Directory For API Requests/Responses</label>
+                                            </div>
+                                            <div class="col-sm-8 mt-3 mt-sm-0">
+                                                <input onchange="document.getElementById('saveCompanyNoRefresh').click()" asp-for="@Model.ApiKeys[i].LocalLoggingDirectory" class="form-control" />
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="container w-100 align-self-center justify-content-center d-flex">
+                    <button type="submit"
+                            class="btn btn-primary w-100 ml-sm-5 mr-sm-5"
+                            asp-controller="Company"
+                            asp-action="RemoveApiKey"
+                            asp-route-apikeyid="@Model.ApiKeys[i].Id"
+                            onclick="ConfirmBeforeExecuting(event, 'Are you sure you want to remove this API key? Any existing clients will immediately break.', () => SubmitAndRefreshPartial(event,'forAdmins', 'companyForm'))">
+                        Remove Api Key
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="d-none">
+        <div>
+            <button type="submit"
+                    id="saveCompany"
+                    class="btn btn-primary w-100  ml-sm-5 mr-sm-5"
+                    asp-controller="Company"
+                    asp-action="SaveChanges"
+                    onclick="SubmitAndRefreshPartial(event,'forAdmins', 'companyForm')">
+                Save Changes
+            </button>
+
+            <button type="submit"
+                    id="saveCompanyNoRefresh"
+                    class="btn btn-primary w-100  ml-sm-5 mr-sm-5"
+                    asp-controller="Company"
+                    asp-action="SaveChanges"
+                    onclick="SubmitAndRefreshPartial(event, null, 'companyForm')">
+                Save Changes No Refresh
+            </button>
+        </div>
+    </div>
+
+</form>

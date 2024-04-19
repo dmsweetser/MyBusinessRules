@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BusinessRules.Data\BusinessRules.Data.csproj" />
+    <ProjectReference Include="..\BusinessRules.Domain\BusinessRules.Domain.csproj" />
+    <ProjectReference Include="..\BusinessRules.Licensing\BusinessRules.Licensing.csproj" />
+    <ProjectReference Include="..\BusinessRules.NugetClient\BusinessRules.NugetClient.csproj" />
+    <ProjectReference Include="..\BusinessRules.Rules\BusinessRules.Rules.csproj" />
+    <ProjectReference Include="..\BusinessRules.ServiceLayer\BusinessRules.ServiceLayer.csproj" />
+    <ProjectReference Include="..\BusinessRules.TestMVC\BusinessRules.TestMVC.csproj" />
+    <ProjectReference Include="..\BusinessRules.Tests\BusinessRules.Tests.csproj" />
+    <ProjectReference Include="..\BusinessRules.UI\BusinessRules.UI.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,242 @@
+﻿@using BusinessRules.Domain.Common;
+@using BusinessRules.Domain.Organization
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Environment
+
+@model SystemViewModel
+@{
+    ViewData["Title"] = "System";
+    var isAdmin = Model.CurrentUser.Role == UserRole.Administrator;
+    var isDeveloper = Model.CurrentUser.Role == UserRole.Developer;
+    var isBusinessUser = Model.CurrentUser.Role == UserRole.BusinessUser;
+}
+
+<link href="~/css/dashboard.css" rel="stylesheet" />
+
+<div class="auth-links-dash @(FeatureFlags.OfflineMode ? "d-none" : "")">
+    @if (User.Identity.IsAuthenticated)
+    {
+        <a asp-controller="Account" asp-action="Logout">Log Out</a>
+    }
+    else
+    {
+        @if (!Environment.IsDevelopment())
+        {
+            <a asp-controller="Account" asp-action="Login">Log In</a>
+        }
+        <a class="btn btn-primary" onclick="document.getElementById('signUpModalButton').click();">Sign Up For Free</a>
+    }
+</div>
+
+
+<div class="main-container">
+    <div class="container-fluid">
+        <div class="row bg-success header">
+            <div class="col-auto m-0 mt-1 mb-0 p-0">
+                <button id="navToggle" class="navbar-toggler d-flex navbar-light ms-auto align-self-center justify-content-center mt-3" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+            </div>
+            <div class="col text-white p-2">
+                <h2>
+                    <img src="~/images/logo.png" alt="BizBot" title="BizBot" width="50" height="50" /><span class="ml-2 d-none d-md-inline">My Business Rules!</span>
+                </h2>
+            </div>
+        </div>
+        <div class="row">
+            <!-- Sidebar wrapped in collapse -->
+            <div class="col-12 col-md-2 collapse navbar-collapse show w-100 p-0" id="sidebar">
+                <div class="sidebar h-100 w-100 w-sm-75">
+                    <ul class="nav nav-tabs flex-column" role="tablist" data-bs-toggle="collapse" data-bs-target="#sidebar">
+                        @if (isAdmin)
+                        {
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link @(isAdmin ? " active" : "")" id="for-admins-tab" data-bs-toggle="tab" data-bs-target="#forAdmins" type="button" role="tab" aria-controls="forAdmins" aria-selected="true">Manage Company</button>
+                            </li>
+                        } @if (isAdmin || isDeveloper)
+                        {
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link @(isDeveloper ? " active" : "")" id="for-developers-tab" data-bs-toggle="tab" data-bs-target="#forDevelopers" type="button" role="tab" aria-controls="forDevelopers" aria-selected="false">Manage Fields</button>
+                            </li>
+                        } @if (isAdmin || isBusinessUser || isDeveloper)
+                        {
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link @(isBusinessUser ? " active" : "")" id="for-business-users-tab" data-bs-toggle="tab" data-bs-target="#forBusinessUsers" type="button"
+                                        role="tab"
+                                        aria-controls="forBusinessUsers"
+                                        aria-selected="true">
+                                    Manage Rules
+                                </button>
+                            </li>
+                        }
+                        <li class="nav-item"
+                            role="presentation">
+                            <button class="nav-link"
+                                    id="live-demo-tab"
+                                    data-bs-toggle="tab"
+                                    data-bs-target="#forEndUsers"
+                                    type="button"
+                                    role="tab"
+                                    aria-controls="forEndUsers"
+                                    aria-selected="false">
+                                Live Demo / Test
+                            </button>
+                        </li>
+                        <li class="nav-item"
+                            role="presentation">
+                            <button class="nav-link"
+                                    id="documentation-info-tab"
+                                    data-bs-toggle="tab"
+                                    data-bs-target="#documentationInfo"
+                                    type="button"
+                                    role="tab"
+                                    aria-controls="documentationInfo"
+                                    aria-selected="false">
+                                Developer Docs
+                            </button>
+                        </li>
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                            <li class="nav-item"
+                                role="presentation">
+                                <button class="nav-link" onclick="window.location.href = '/Account/Logout';">Log Out</button>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item @(FeatureFlags.OfflineMode ? "d-none" : "")"
+                                role="presentation">
+                                <button class="nav-link"
+                                        id="pricing-info-tab"
+                                        data-bs-toggle="tab"
+                                        data-bs-target="#pricingInfo"
+                                        type="button"
+                                        role="tab"
+                                        aria-controls="pricingInfo"
+                                        aria-selected="false">
+                                    Pricing
+                                </button>
+                            </li>
+                            <li class="nav-item @(FeatureFlags.OfflineMode ? "d-none" : "")"
+                                role="presentation">
+                                <a class="nav-link w-100 text-center logout" href="/"
+                                   onclick="event.preventDefault(); window.location.href = '/';">Home</a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+            <div class="col-12 p-0">
+                <div class="main">
+                    <div class="tab-content" id="systemTabContent">
+                        @if (isAdmin)
+                        {
+                            <div class="tab-pane fade show active"
+                                 id="forAdmins"
+                                 role="tabpanel"
+                                 aria-labelledby="for-admins-tab">
+                                @await Html.PartialAsync("/Views/Shared/Components/_CompanyComponent.cshtml", Model.CurrentCompany)
+                            </div>
+                        }
+                        @if (isAdmin || isDeveloper)
+                        {
+                            <div class="tab-pane fade @(isDeveloper ? "show active" : "")"
+                                 id="forDevelopers"
+                                 role="tabpanel"
+                                 aria-labelledby="for-developers-tab">
+                                @await Html.PartialAsync("/Views/Shared/Components/_DeveloperComponent.cshtml", Model)
+                            </div>
+                        }
+                        @if (isAdmin || isBusinessUser || isDeveloper)
+                        {
+                            <div class="tab-pane fade @(isBusinessUser ? "show active" : "")"
+                                 id="forBusinessUsers"
+                                 role="tabpanel"
+                                 aria-labelledby="for-business-users-tab">
+                                @await Html.PartialAsync("/Views/Shared/Components/_BusinessUserComponent.cshtml", Model)
+                            </div>
+                        }
+                        <div class="tab-pane fade" id="forEndUsers" role="tabpanel" aria-labelledby="live-demo-tab">
+                            @await Html.PartialAsync("/Views/Shared/Components/_EndUserComponent.cshtml", Model)
+                        </div>
+                        @if (!User.Identity.IsAuthenticated)
+                        {
+                            <div class="tab-pane fade @(FeatureFlags.OfflineMode ? "d-none" : "")" id="pricingInfo" role="tabpanel" aria-labelledby="pricing-info-tab">
+                                @await Html.PartialAsync("/Views/Shared/Components/_Pricing.cshtml")
+                            </div>
+                        }
+                        <div class="tab-pane fade"
+                             id="documentationInfo"
+                             role="tabpanel"
+                             aria-labelledby="documentation-info-tab">
+                            <div class="row text-center mt-4 mb-2">
+                                <h3>Documentation</h3>
+                            </div>
+                            <hr />
+                            @await Html.PartialAsync("/Views/Shared/Components/_Documentation.cshtml", Model)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button id="introButton"
+            type="button"
+            class="btn btn-primary d-none"
+            data-bs-toggle="modal"
+            data-bs-target="#introModal">
+        Intro
+    </button>
+    <div class="modal fade" id="introModal" tabindex="-1" aria-labelledby="introModalLabel" aria-hidden="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="introModalLabel">Welcome to My Business Rules!</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mt-2 mb-2 ml-1 mr-1">
+                        Want to learn what My Business Rules is all about?
+                    </div>
+                    <div class="row mt-2 ml-1 mr-1">
+                        <a class="btn btn-primary"
+                           href="https://www.youtube.com/embed/videoseries?list=PLzQLgxI2tbWkNTTRANBXy1Wu7ytBdASmo"
+                           target="_blank">
+                            Quick Introduction Video
+                        </a>
+                    </div>
+                    <div class="row mt-2 mb-2 ml-1 mr-1">
+                        Are you a business user who wants to see what My Business Rules is like to use? Click below, and then go to "Manage Rules"
+                    </div>
+                    <div class="row mt-2 ml-1 mr-1">
+                        <a href="/Field/GenerateInitialField" class="btn btn-primary">
+                            Try With Sample Data
+                        </a>
+                    </div>
+                    <div class="row mt-2 mb-2 ml-1 mr-1">
+                        Are you a developer who wants to see how My Business Rules would work with your existing app?
+                    </div>
+                    <div class="row mt-2 ml-1 mr-1">
+                        <a class="btn btn-primary" data-bs-dismiss="modal" href="" onclick="document.getElementById('documentation-info-tab').click(); setTimeout(() => document.getElementById('navToggle').click(), 500);">Go to the Developer Docs</a>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (!FeatureFlags.OfflineMode)
+    {
+        <script>
+            window.addEventListener('load', function () {
+                if ('@Model.CurrentUser.EmailAddress.EndsWith("@mybizrules.com")'.toLowerCase() == "true"
+                    && sessionStorage.getItem("mbrWelcomeShown") !== "1" || "") {
+                    document.getElementById("introButton").click();
+                    sessionStorage.setItem("mbrWelcomeShown", "1");
+                }
+            });
+        </script>
+    }    
+</div>

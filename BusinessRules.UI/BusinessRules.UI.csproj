@@ -1,0 +1,66 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+	<PropertyGroup>
+		<TargetFramework>net7.0</TargetFramework>
+		<Nullable>disable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<UserSecretsId>201d59e0-1c7b-4db4-a488-bbd43e15dfc8</UserSecretsId>
+		<Configurations>Debug;Release;DebugOfflineMode;ReleaseOfflineMode</Configurations>
+		<SignAssembly>True</SignAssembly>
+		<AssemblyOriginatorKeyFile>MyBusinessRules.snk</AssemblyOriginatorKeyFile>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'" />
+	<ItemGroup>
+		<PackageReference Include="AspNetCore.SEOHelper" Version="1.0.1" />
+		<PackageReference Include="Auth0.AspNetCore.Authentication" Version="1.2.0" />
+		<PackageReference Include="Azure.Data.Tables" Version="12.8.0" />
+		<PackageReference Include="FluentFTP" Version="48.0.3" />
+		<PackageReference Include="Markdig" Version="0.33.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="6.0.11" />
+		<PackageReference Include="Microsoft.Extensions.Azure" Version="1.6.0" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+		<PackageReference Include="Obfuscar" Version="2.2.38">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\BusinessRules.Domain\BusinessRules.Domain.csproj" />
+		<ProjectReference Include="..\BusinessRules.Licensing\BusinessRules.Licensing.csproj" />
+		<ProjectReference Include="..\BusinessRules.Rules\BusinessRules.Rules.csproj" />
+		<ProjectReference Include="..\BusinessRules.ServiceLayer\BusinessRules.ServiceLayer.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+		<None Include="wwwroot\*" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Content Remove="wwwroot\robots.txt" />
+	</ItemGroup>
+	<ItemGroup>
+	  <_WebToolingArtifacts Remove="Properties\PublishProfiles\StandaloneAPp.pubxml" />
+	</ItemGroup>
+	<ItemGroup>
+	  <EmbeddedResource Include="..\BusinessRules.NpmPackage\README.md" Link="wwwroot\markdown\nodejs\README.md" />
+	  <EmbeddedResource Include="..\BusinessRules.NugetClient\Readme.md" Link="wwwroot\markdown\csharp\Readme.md" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Folder Include="wwwroot\markdown\csharp\" />
+	  <Folder Include="wwwroot\markdown\nodejs\" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Content Update="wwwroot\js\multifield.js">
+	    <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+	    <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+	  </Content>
+	</ItemGroup>
+	<ItemGroup>
+	  <None Update="Obfuscar.Console.exe">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="obfuscar.xml">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	  <None Update="wwwroot\MyBusinessRules_Offline.zip">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	</ItemGroup>
+</Project>

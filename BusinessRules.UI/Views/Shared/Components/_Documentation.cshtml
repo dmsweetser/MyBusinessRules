@@ -1,0 +1,168 @@
+﻿@using BusinessRules.Domain.Common;
+@using BusinessRules.Domain.Helpers;
+@using BusinessRules.UI.Common;
+@using Microsoft.AspNetCore.Html;
+@using Microsoft.Extensions.Options;
+@using Newtonsoft.Json;
+@using Newtonsoft.Json.Linq;
+@using Markdig;
+@using System.IO
+@using System.Reflection
+
+@model SystemViewModel
+@inject IOptions<AppSettings> parsedConfig;
+@{
+    var config = parsedConfig.Value;
+    Layout = null;
+
+    var assembly = Assembly.GetExecutingAssembly();
+
+    string cSharpText;
+    string nodeJsText;
+
+    using (var stream = assembly.GetManifestResourceStream("BusinessRules.UI.wwwroot.markdown.csharp.Readme.md"))
+    using (var reader = new StreamReader(stream))
+    {
+        cSharpText = reader.ReadToEnd();
+        cSharpText = cSharpText.Replace(
+            "new MyBusinessRulesClient(\"%YOUR API KEY%\");",
+            "new MyBusinessRulesClient(\"" + Model.Applications[0].EndUserDTO.CurrentApiKey + "\");");
+    }
+
+    using (var stream = assembly.GetManifestResourceStream("BusinessRules.UI.wwwroot.markdown.nodejs.README.md"))
+    using (var reader = new StreamReader(stream))
+    {
+        nodeJsText = reader.ReadToEnd().Split("## License")[0];
+        nodeJsText = nodeJsText.Replace(
+            "new MyBusinessRulesClient('958ff8cc-f71e-40a8-9d22-7f50fa024f32')",
+            "new MyBusinessRulesClient('" + Model.Applications[0].EndUserDTO.CurrentApiKey + "')");
+    }
+}
+
+@functions {
+    IHtmlContent RenderMarkdown(string markdownContent)
+    {
+        var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
+        var htmlContent = Markdown.ToHtml(markdownContent, pipeline);
+        return new HtmlString(htmlContent);
+    }
+}
+
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <div class="accordion" id="documentationAccordion">
+
+
+
+                <div class="accordion-item p-2">
+                    <h2 class="accordion-header" id="headingIntroduction">
+                        <button class="accordion-button collapsed font-weight-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseIntroduction" aria-expanded="false" aria-controls="collapseIntroduction" onclick="saveAccordionState()">
+                            What Is My Business Rules?
+                        </button>
+                    </h2>
+                    <div id="collapseIntroduction" class="accordion-collapse collapse" aria-labelledby="headingIntroduction" data-bs-parent="#documentationAccordion">
+                        <div class="accordion-body">
+                            <div class="container">
+                                <h1 class="text-center">What is My Business Rules?</h1>
+                                <p>My Business Rules is an app that enables business users to manage their own business logic. Here is the basic idea: in most apps that your developers have, there is probably a domain object, a "thing", that represents what the app is for. So if you are in insurance, that "thing" might be  a quote or a policy. If you are in finance, that "thing"" might be a portfolio. If you have a shopping site, that "thing" might be a customer or a product. You get the idea.</p>
+                                <p>Now, ideally, your developers have a separation of concerns between the front end of your app (the website or the mobile app) and the business logic that decides how the app should behave. Business logic can include things like when to show or hide a field on the page, or what credit to apply to a certain combination of inputs, or whether to require or not require a certain field based on other information provided in the app. If you are in insurance, this might mean that if the customer has a certain age, you might require additional information from them (like for a youthful operator, wanting to know if they live at home). Decisions like these are fundamentally a business process or requirement expressed in code.</p>
+                                <p>Now, usually, the process to implement these business requirements goes like this: 1) The business user requests that the requirement be implemented; 2) A project manager or business analyst works with the business user to clarify the requirement, and then prioritize the change for the development team; 3) The development team picks up the request and completes it, confirming with the project manager, business analyst, or business user as they go to make sure they did things properly.</p>
+                                <p>But there are a lot of problems with this process. The most obvious is the fact that the person who knows the requirement (the business user) isn't able to implement it themselves. They have to go through a process of translation before they get to the person who can implement the change. And often, the developer implementing the change doesn't have the same level of expertise that the business user does in terms of the requirement. This means they can miss gotchas and key details that the business user would catch, and so they may implement the requirement incorrectly.</p>
+                                <p>This is where My Business Rules comes in. The goal of My Business Rules is to enable the business user to implement their requirement themselves. To do this, My Business Rules asks the developer to import the "thing", the domain object, into our system, and then My Business Rules presents that domain object to the business user through a simple, easy-to-use interface that lets them define rules for the object. Prior to this, the developer is able to curate the domain object if they want, doing things like only allowing certain options for some fields, or hiding some fields altogether, or requiring certain types of input. This is intended to make the process as safe as possible for the business user. But then, the rest is up to the business user. They get to decide whether you can show or hide fields, or whether to give a certain credit based on a variety of conditions.</p>
+                                <p>To do this, the business user will take advantage of the built-in logical options available for rules, things like "greater than", "less than", "today's date", and so on. They can compare fields, they can check against certain allowed values, and make decisions based on this. One common example would be if you want to decline certain business based on user inputs - My Business Rules enables the business user to define these rules themselves.</p>
+                                <p>Besides the initial benefit of enabling the business user to do what they do best (define and enforce requirements of the business), there is also a side benefit that now the requirements and implementation are clearly documented in the system. The business user doesn't need to ask whether what they wanted is what they got! They can see it for themselves. This also allows the developer to focus on new systems and functionality, where as long as they have a clear domain object that can be adjusted by the business user, they don't need to focus on implementing individual behaviors or requirements. They can work on big picture functionality. Using My Business Rules also encourages good design, because it requires the developer to avoid adding their own business logic in the app themselves. This makes re-writes and modernization efforts simpler, because the front end and the back end are independent and modular.</p>
+                                <p>This is the core of My Business Rules. Empowering business users to manage their own rules, and in the process, enabling developers to focus on less maintenance tasks and more new development. It's a win for everybody!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
+                <div class="accordion-item p-2">
+                    <h2 class="accordion-header" id="headingVanillaJs">
+                        <button class="accordion-button collapsed font-weight-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseVanillaJs" aria-expanded="false" aria-controls="collapseVanillaJs" onclick="saveAccordionState()">
+                            How to use My Business Rules in Vanilla Javascript
+                        </button>
+                    </h2>
+                    <div id="collapseVanillaJs" class="accordion-collapse collapse" aria-labelledby="headingVanillaJs" data-bs-parent="#documentationAccordion">
+                        <div class="accordion-body">
+                            <div class="container">
+                                <h1 class="text-center">How to use My Business Rules! in JavaScript</h1>
+                                <p><strong>Step 1:</strong> Decide on a domain object in your existing app that you want to integrate with My Business Rules. You can call the API without doing any configuration in advance, and My Business Rules will automatically configure itself using your provided domain object.</p>
+                                <p><strong>Step 2:</strong> Send a POST request to the API endpoint with your data as the request body, and include your api key as a query string parameter. The endpoint URL is <code>@(config.BaseEndpointUrl)/api/Public/ExecuteRules</code>. For example, using JavaScript fetch, you can do something like this:</p>
+                                <pre>
+                                <code class="javascript">
+var yourObject = {
+    [YOUR OBJECT HERE]
+};
+
+async function callMyBusinessRules(currentObject) {
+      try {
+          const response = await fetch("@(config.BaseEndpointUrl)/Public/ExecuteRules?apiKey=@(Model.Applications[0].EndUserDTO.CurrentApiKey)", 
+          {
+              method: "POST",
+              body: JSON.stringify(currentObject)
+          });
+
+          if (!response.ok) {
+              throw Error(response.statusText);
+          }
+
+          return await response.json();
+      } catch (error) {
+          console.log(error);
+      }
+  }
+
+yourObject = await callMyBusinessRules(yourObject);
+</code></pre>
+                                <p><strong>Step 3:</strong> Receive the response from the API, which will be an updated version of your raw JSON object. The only difference will be that the object has been updated by your business rules.</p>
+
+                                <p><strong>Step 4:</strong> Use the response data as you wish. You can display it on a web page, store it in a database, send it to another service, etc.</p>
+                                <p>That's it! You have successfully used My Business Rules! in JavaScript to execute business rules on your data and get the results back.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
+                <div class="accordion-item p-2">
+                    <h2 class="accordion-header" id="headingNodeJs">
+                        <button class="accordion-button collapsed font-weight-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseNodeJs" aria-expanded="false" aria-controls="collapseNodeJs" onclick="saveAccordionState()">
+                            How to use My Business Rules in Node.js
+                        </button>
+                    </h2>
+                    <div id="collapseNodeJs" class="accordion-collapse collapse" aria-labelledby="headingNodeJs" data-bs-parent="#documentationAccordion">
+                        <div class="accordion-body">
+                            <div class="container">
+                                @RenderMarkdown(nodeJsText)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item p-2">
+                    <h2 class="accordion-header" id="headingCSharp">
+                        <button class="accordion-button collapsed font-weight-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCSharp" aria-expanded="false" aria-controls="collapseCSharp" onclick="saveAccordionState()">How to use My Business Rules in C#</button>
+                    </h2>
+                    <div id="collapseCSharp" class="accordion-collapse collapse" aria-labelledby="headingCSharp" data-bs-parent="#documentationAccordion">
+                        <div class="accordion-body">
+                            <div class="container">
+                                @RenderMarkdown(cSharpText)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
+
+            </div>
+        </div>
+    </div>
+</div>
+
+

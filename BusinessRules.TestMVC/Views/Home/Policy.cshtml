@@ -1,0 +1,70 @@
+﻿@model BusinessRules.TestMVC.Models.Policy
+
+@{
+    ViewData["Title"] = "Policy";
+}
+
+<h1>Policy</h1>
+
+<div class="container shadow-lg p-5">
+    @using (Html.BeginForm(null, null, FormMethod.Post, new { id = "policyForm" }))
+    {
+        <div onchange="setTimeout(() => document.getElementById('sendPolicy').click(), 250);">
+            @Html.EditorFor(model => model.AgentCode)
+            @Html.EditorFor(model => model.IssueDate)
+            @Html.EditorFor(model => model.RenewalDate)
+
+            <div class="container shadow m-2 p-2">
+                <h3>Insured Info</h3>
+                @Html.EditorFor(model => model.InsuredInfo.Name)
+                <div class="container shadow m-2 p-2">
+                    <h3>Address Info</h3>
+                    @Html.EditorFor(model => model.InsuredInfo.AddressInfo.Street)
+                    @Html.EditorFor(model => model.InsuredInfo.AddressInfo.City)
+                    @Html.EditorFor(model => model.InsuredInfo.AddressInfo.State)
+                    @Html.EditorFor(model => model.InsuredInfo.AddressInfo.ZipCode)
+                </div>
+            </div>
+
+            <div class="container shadow m-2 p-2">
+                <h3>Coverage Info</h3>
+                @Html.EditorFor(model => model.CoverageInfo.LiabilityCoverage)
+                @Html.EditorFor(model => model.CoverageInfo.PropertyDamageCoverage)
+            </div>
+
+            @for (var i = 0; i < Model.VehicleInfo.Count; i++)
+            {
+                <div class="container shadow m-2 p-2">
+                    <h3>Vehicle Info - @(Model.VehicleInfo[i].Year.Value + " " + Model.VehicleInfo[i].Make.Value + " " + Model.VehicleInfo[i].Model.Value)</h3>
+                    @Html.HiddenFor(model => model.VehicleInfo[i].Id)
+                    @Html.EditorFor(model => model.VehicleInfo[i].Year)
+                    @Html.EditorFor(model => model.VehicleInfo[i].Make)
+                    @Html.EditorFor(model => model.VehicleInfo[i].Model)
+                    @Html.EditorFor(model => model.VehicleInfo[i].CostNew)
+                    @Html.EditorFor(model => model.VehicleInfo[i].CollisionDeductible)
+                    @Html.EditorFor(model => model.VehicleInfo[i].ComprehensiveDeductible)
+                </div>
+            }
+
+            @for (var i = 0; i < Model.DriverInfo.Count; i++)
+            {
+                <div class="container shadow m-2 p-2">
+                    <h3>Driver Info - @(Model.DriverInfo[i].Name.Value)</h3>
+                    @Html.HiddenFor(model => model.DriverInfo[i].Id)
+                    @Html.EditorFor(model => model.DriverInfo[i].Name)
+                    @Html.EditorFor(model => model.DriverInfo[i].DateOfBirth)
+                    @Html.EditorFor(model => model.DriverInfo[i].MaritalStatus)
+                    @Html.EditorFor(model => model.DriverInfo[i].VehicleDrivenMost)
+                    @Html.EditorFor(model => model.DriverInfo[i].IsPrincipalDriver)
+                </div>
+            }
+
+            <div class="container shadow m-2 p-2">
+                @Html.EditorFor(model => model.PremiumPaid)
+                @Html.EditorFor(model => model.PolicyStatus)
+            </div>
+        </div>
+           
+        <button id="sendPolicy" type="submit" asp-action="UpdatePolicy" class="d-none btn btn-primary">Update Policy</button>
+    }
+</div>

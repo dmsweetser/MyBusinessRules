@@ -1,0 +1,184 @@
+﻿@using BusinessRules.Domain.Common
+@using BusinessRules.Licensing;
+@using Microsoft.Extensions.Options
+@inject IOptions<AppSettings> parsedConfig;
+@{
+    var config = parsedConfig.Value;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>My Business Rules!</title>
+    <!-- Facebook -->
+    <meta property='og:title' content='My Business Rules!' />
+    <meta property='og:description' content='My Business Rules empowers business users to safely manage business rules.' />
+    <meta property='og:image' content='https://www.mybizrules.com/images/logo.png' />
+    <meta property='og:url' content='https://www.mybizrules.com/' />
+    <!-- Twitter -->
+    <meta name='twitter:card' content='summary_large_image' />
+    <meta name='twitter:title' content='My Business Rules!' />
+    <meta name='twitter:description' content='My Business Rules empowers business users to safely manage business rules.' />
+    <meta name='twitter:image' content='https://www.mybizrules.com/images/logo.png' />
+    <!-- LinkedIn -->
+    <meta name='linkedin:title' content='My Business Rules!' />
+    <meta name='linkedin:description' content='My Business Rules empowers business users to safely manage business rules.' />
+    <meta name='linkedin:image' content='https://www.mybizrules.com/images/logo.png' />
+    <!-- Common -->
+    <link rel="icon" type="image/x-icon" href="~/images/favicon.ico">
+
+    <link rel="stylesheet" href="~/lib/bootstrap/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/custom/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/lib/jquery-ui/dist/themes/south-street/jquery-ui.min.css" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="~/lib/material-components-web/material-components-web.min.css" />
+    <link href="~/lib/codemirror/codemirror.css" rel="stylesheet" />
+    <link href="~/lib/codemirror/codemirror.min.css" rel="stylesheet" />
+    <link href="~/lib/codemirror/addon/lint/lint.css" rel="stylesheet" />
+    <link href="~/lib/codemirror/addon/lint/lint.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/jquery-ui/dist/jquery-ui.min.js"></script>
+    <script src="~/lib/material-components-web/material-components-web.min.js"></script>
+    <script src="~/lib/bootstrap/js/bootstrap.bundle.js"></script>
+    <script src="~/lib/jshint/dist/jshint.js"></script>
+    <script src="~/lib/codemirror/codemirror.js"></script>
+    <script src="~/lib/codemirror/codemirror.min.js"></script>
+    <script src="~/lib/codemirror/mode/javascript/javascript.js"></script>
+    <script src="~/lib/codemirror/mode/javascript/javascript.min.js"></script>
+    <script src="~/lib/codemirror/addon/lint/lint.js"></script>
+    <script src="~/lib/codemirror/addon/lint/lint.min.js"></script>
+    <script src="~/lib/codemirror/addon/display/autorefresh.js"></script>
+    <script src="~/lib/codemirror/addon/display/autorefresh.min.js"></script>
+    <script src="~/lib/codemirror/addon/lint/javascript-lint.js"></script>
+    <script src="~/lib/codemirror/addon/lint/javascript-lint.min.js"></script>
+
+    <script src="~/js/utility.js" asp-append-version="true"></script>
+    <script src="~/js/table.js" asp-append-version="true"></script>
+    <script src="~/js/component.js" asp-append-version="true"></script>
+    <script src="~/js/groupname.js" asp-append-version="true"></script>
+    <script src="~/js/multifield.js" asp-append-version="true"></script>
+    <script src="~/js/accordion.js" asp-append-version="true"></script>
+    <script src="~/js/comms.js" asp-append-version="true"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+</head>
+<body>
+    @RenderBody()
+
+    <button id="signUpModalButton"
+            type="button"
+            class="btn btn-primary d-none"
+            data-bs-toggle="modal"
+            data-bs-target="#signUpModal">
+        Sign Up For Free
+    </button>
+
+    <div class="modal fade" id="signUpModal" tabindex="-1" aria-labelledby="signUpModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="signUpModalLabel">Sign Up for My Business Rules</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="row mt-2 ml-1 mr-1">
+                    <span>To sign up for My Business Rules, please enter an email address you will be using to access your account.</span>
+                </div>
+                <div class="modal-body">
+                    <div class="row mt-2 ml-1 mr-1 w-100">
+                        <div class="form-group w-100">
+                            <div class="row w-100">
+                                <div class="col-4">
+                                    <label for="emailAddress" class="w-100 mt-2 form-label">Email Address:</label>
+                                </div>
+                                <div class="col-8">
+                                    <input type="email" class="w-100 mt-1 form-control" id="emailAddress" />
+                                    <div id="emailValidationMessage" class="text-danger"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-2 ml-1 mr-1">
+                        <a id="signUpLink" class="btn btn-primary">
+                            Sign Up For Free
+                        </a>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var signUpLink = document.getElementById("signUpLink");
+        signUpLink.addEventListener("click", () => {
+            var emailAddress = document.getElementById("emailAddress").value;
+            var emailValidationMessage = document.getElementById("emailValidationMessage");
+
+            if (emailAddress.trim() === '' || !isValidEmail(emailAddress)) {
+                emailValidationMessage.textContent = "Valid email is required";
+            } else {
+                // Email is valid, proceed with the signup
+                emailValidationMessage.textContent = ""; // Clear any previous error message
+                window.location.href = "/Account/SignUp?emailAddress=" + emailAddress;
+            }
+        });
+
+        function isValidEmail(email) {
+            var emailRegex = /^[A-Za-z0-9._%-]+@@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}$/;
+            return emailRegex.test(email);
+        }
+    </script>
+
+    <div class="modal fade" style="z-index:9999;" id="alertModal" tabindex="-1" role="dialog" aria-labelledby="alertModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="alertModalLabel">Alert</h5>
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="alertModalBody"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" style="z-index:9999;" id="confirmationModal" tabindex="-1" role="dialog" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmationModalLabel">Confirmation</h5>
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="confirmationModalBody"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="confirmButton">OK</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="cancelButton">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer section -->
+    <div class="footer">
+        <div class="container">
+            <p>
+                v@(LicenseManager.CurrentVersionNumber)
+                | © @DateTime.Now.Year Daniel Sweetser. All rights reserved.
+                <a href="/Home/Privacy" target="_blank">Privacy Policy</a>
+                | <a href="mailto:mybusinessrules@outlook.com" target="_blank">Contact Me</a>
+                | <a href="https://www.linkedin.com/company/my-business-rules" target="_blank">Connect on LinkedIn</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

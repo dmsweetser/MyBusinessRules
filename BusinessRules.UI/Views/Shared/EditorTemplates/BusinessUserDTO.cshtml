@@ -1,0 +1,336 @@
+﻿@using BusinessRules.Domain.Common;
+@using BusinessRules.Domain.DTO
+@using Newtonsoft.Json
+@model BusinessUserDTO
+
+@{
+    Layout = null;
+
+    var ruleGroups =
+        Model.Rules
+            .Select(x => x.GroupName)
+            .OrderBy(x => x)
+            .Distinct()
+            .ToList();
+
+}
+
+<div class="row pb-3">
+    <div class="col-sm-auto">
+        <span>This is where you get to manage your business rules, the heart and soul of the system. Your business rules should generally follow the format "if this then that". If you don't see an option that you need, feel free to reach out to <a href="mailto:mybusinessrules@outlook.com">mybusinessrules@outlook.com</a>  so we can get it added for you. If you are working with a developer in your company, they also have the ability to add custom capabilities for you directly inside My Business Rules. Enjoy!</span>
+    </div>
+</div>
+
+<div class="d-none d-sm-flex row pt-3">
+    <div class="col-sm-auto mt-2">
+        <h4>Rules for <strong>@Model.CurrentField.FriendlyName</strong></h4>
+    </div>
+    <div class="col-sm">
+        <button type="submit"
+                class="btn btn-primary w-75"
+                asp-controller="Rule"
+                asp-action="AddNewRule"
+                asp-route-topLevelFieldId="@Model.CurrentField.TopLevelFieldId"
+                onclick="RefreshPartial(event,'forBusinessUsers')">
+            Add New Rule
+        </button>
+    </div>
+</div>
+
+<div class="d-block d-sm-none pt-3">
+    <div class="w-100 text-center">
+        <h4>Rules for <strong>@Model.CurrentField.FriendlyName</strong></h4>
+    </div>
+    <div class="w-100 text-center">
+        <button type="submit"
+                class="btn btn-primary w-75"
+                asp-controller="Rule"
+                asp-action="AddNewRule"
+                asp-route-topLevelFieldId="@Model.CurrentField.TopLevelFieldId"
+                onclick="RefreshPartial(event,'forBusinessUsers')">
+            Add New Rule
+        </button>
+    </div>
+</div>
+
+<div class="row pt-3">
+    <div class="mt-2">
+        <h6>Here are the ground rules:</h6>
+    </div>
+    <div class="mt-2">
+        <ul>
+            <li>Rules below are run from top to bottom, first by group name, and then by rule name</li>
+            <li>Every rule that is "Enabled In Production" is always run</li>
+            <li>Rules are ordered by group name and then by rule name, so to change the order, just change the names</li>
+            <li>To try out a rule before you go live, check "Enable For Testing Only"</li>
+            <li>
+                When you are ready for a rule to go live, first <strong>uncheck</strong> "Enable For Testing Only",
+                and then <strong>check</strong> "Enable In Production"
+            </li>
+        </ul>
+    </div>
+</div>
+
+<div id="groupNames@(Model.CurrentField.TopLevelFieldId.ToString("N"))" class="d-none">
+    @Html.Raw(JsonConvert.SerializeObject(ruleGroups))
+</div>
+
+<form method="post" id="ruleForm_@(Model.CurrentField.TopLevelFieldId.ToString("N"))">
+    <div class="accordion" id="ruleGroupAccordion@(Model.CurrentField.Id.ToString("N"))">
+        @foreach (var ruleGroup in ruleGroups)
+        {
+            <div class="accordion-item p-2">
+                <h2 class="accordion-header" id="headingRuleGroup@(ruleGroup?.Replace(" ","") ?? "")">
+                    <button class="accordion-button font-weight-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRuleGroup@(ruleGroup?.Replace(" ", "") ?? "")" aria-expanded="true" aria-controls="collapseRuleGroup@(ruleGroup?.Replace(" ","") ?? "")" onclick="saveAccordionState()">
+                        @(string.IsNullOrWhiteSpace(ruleGroup) ? "Default Group" : ruleGroup)
+                    </button>
+                </h2>
+                <div id="collapseRuleGroup@(ruleGroup?.Replace(" ","") ?? "")" class="accordion-collapse collapse show" aria-labelledby="headingRuleGroup@(ruleGroup?.Replace(" ","") ?? "")" data-bs-parent="ruleGroupAccordion@(Model.CurrentField.Id.ToString("N"))">
+                    <div class="accordion-body">
+                        @for (int i = 0; i < Model.Rules.Count; i++)
+                        {
+                            <div class="container">
+                                @if (Model.Rules[i].GroupName == ruleGroup)
+                                {
+                                    <div class="container mt-3 pt-2 pb-2 shadow-lg">
+                                        <input asp-for="@Model.Rules[i].Id" type="hidden" />
+
+                                        <div class="container form-group row mt-1">
+                                            <div class="col-sm-2 mt-2">
+                                                <label asp-for="@Model.Rules[i].GroupName"><strong>Group Name:</strong></label>
+                                            </div>
+                                            <div class="col-sm">
+                                                <input onchange="document.getElementById('saveRule_@(Model.Rules[i].Id.ToString("N"))').click()"
+                                                       asp-for="@Model.Rules[i].GroupName" class="form-control groupNameInput@(Model.Rules[i].Id.ToString("N"))"
+                                                       onfocus="groupNameAutoSuggest(event, '@(Model.Rules[i].Id.ToString("N"))', document.getElementById('groupNames@(Model.CurrentField.TopLevelFieldId.ToString("N"))').innerText)"
+                                                       onkeyup="groupNameAutoSuggest(event, '@(Model.Rules[i].Id.ToString("N"))', document.getElementById('groupNames@(Model.CurrentField.TopLevelFieldId.ToString("N"))').innerText)"
+                                                       autocomplete="off" />
+                                                <div id="groupNameList@(Model.Rules[i].Id.ToString("N"))" class="group-name-list"></div>
+                                            </div>
+                                            <div class="col-sm-2 mt-2">
+                                                <label asp-for="@Model.Rules[i].Name"><strong>Rule Name:</strong></label>
+                                            </div>
+                                            <div class="col-sm">
+                                                <input onchange="document.getElementById('saveRule_@(Model.Rules[i].Id.ToString("N"))').click()" asp-for="@Model.Rules[i].Name" class="form-control" />
+                                            </div>
+                                        </div>
+
+                                        <div class="row mt-1">
+                                            <div class="col-sm mt-1">
+                                                <button type="submit"
+                                                        class="btn btn-primary w-100"
+                                                        asp-controller="Rule"
+                                                        asp-action="RemoveRule"
+                                                        asp-route-topLevelFieldId="@Model.CurrentField.TopLevelFieldId"
+                                                        asp-route-ruleid="@Model.Rules[i].Id"
+                                                        onclick="ConfirmBeforeExecuting(event, 'Are you sure you want to remove this rule?', () => SubmitAndRefreshPartial(event,'forBusinessUsers', 'ruleForm_@(Model.CurrentField.TopLevelFieldId.ToString("N"))'))">
+                                                    Remove
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div class="container form-group row mt-1">
+                                            <div class="col-sm-auto form-check form-switch ml-5 mt-1">
+                                                <input onchange="document.getElementById('saveRule_@(Model.Rules[i].Id.ToString("N"))').click()" asp-for="@Model.Rules[i].IsActivated" type="checkbox" class="form-check-input" />
+                                                <label class="form-check-label" asp-for="@Model.Rules[i].IsActivated">Enable In Production</label>
+                                            </div>
+                                            <div class="col-sm-auto form-check form-switch ml-5 mt-1">
+                                                <input onchange="document.getElementById('saveRule_@(Model.Rules[i].Id.ToString("N"))').click()" asp-for="@Model.Rules[i].IsTestMode" type="checkbox" class="form-check-input" />
+                                                <label class="form-check-label" asp-for="@Model.Rules[i].IsTestMode">Enable For Testing Only</label>
+                                            </div>
+                                        </div>
+
+                                        <div class="container form-group row mt-1">
+                                            <div class="col-sm-2">
+                                                <label asp-for="@Model.Rules[i].StartUsingOn">Start Using On:</label>
+                                            </div>
+                                            <div class="col-sm-10">
+                                                <input onchange="document.getElementById('saveRule_@(Model.Rules[i].Id.ToString("N"))').click()" asp-for="@Model.Rules[i].StartUsingOn" class="form-control" type="date" />
+                                            </div>
+                                        </div>
+
+                                        <div class="container form-group row mt-1">
+                                            <div class="col-sm-2">
+                                                <label asp-for="@Model.Rules[i].StopUsingOn">Stop Using On:</label>
+                                            </div>
+                                            <div class="col-sm-10">
+                                                <input onchange="document.getElementById('saveRule_@(Model.Rules[i].Id.ToString("N"))').click()" asp-for="@Model.Rules[i].StopUsingOn" class="form-control" type="date" />
+                                            </div>
+                                        </div>
+
+                                        <div class="container w-100 align-self-center justify-content-center d-flex mt-2">
+                                            <h6>Rule Steps: (Pick from options below)</h6>
+                                        </div>
+
+                                        <div class="row w-100 w-sm-75 align-self-center justify-content-center d-flex mt-2 h-100 m-auto">
+                                            @for (int j = 0; j < Model.Rules[i].RuleSequence.Count; j++)
+                                            {
+                                                <input type="hidden" asp-for="@Model.Rules[i].RuleSequence[j].Id" />
+                                                <input type="hidden" asp-for="@Model.Rules[i].RuleSequence[j].DefinitionId" />
+                                                <input type="hidden" asp-for="@Model.Rules[i].RuleSequence[j].Description" />
+
+                                                <div class="col-12 col-sm-auto component-read-only">
+                                                    <span>@Model.Rules[i].RuleSequence[j].Description</span>
+                                                </div>
+
+                                                @for (int k = 0; k < @Model.Rules[i].RuleSequence[j].Arguments.Count; k++)
+                                                {
+                                                    var isNewestArgument = Model.Rules[i].RuleSequence[j].Arguments.Count == k + 1
+                                                    && string.IsNullOrWhiteSpace(Model.Rules[i].RuleSequence[j].Arguments[k].Value);
+
+                                                    <input type="hidden" asp-for="@Model.Rules[i].RuleSequence[j].Arguments[k].Name" />
+                                                    <input type="hidden" asp-for="@Model.Rules[i].RuleSequence[j].Arguments[k].AllowedValueRegex" />
+                                                    <input type="hidden" asp-for="@Model.Rules[i].RuleSequence[j].Arguments[k].IsADateField" />
+                                                    <input type="hidden" asp-for="@Model.Rules[i].RuleSequence[j].Arguments[k].FriendlyValidationMessageForRegex" />
+                                                    <input type="hidden" asp-for="@Model.Rules[i].RuleSequence[j].Arguments[k].AllowedValues" />
+                                                    <input type="hidden" asp-for="@Model.Rules[i].RuleSequence[j].Arguments[k].Editable" />
+
+                                                    @if (!Model.Rules[i].IsActivated
+                                                   && Model.Rules[i].RuleSequence[j].Arguments[k].Editable
+                                                   && !string.IsNullOrWhiteSpace(Model.Rules[i].RuleSequence[j].Arguments[k].AllowedValues))
+                                                    {
+                                                        var allowedValues = Model.Rules[i].RuleSequence[j].Arguments[k].AllowedValues.Split('|', StringSplitOptions.RemoveEmptyEntries).ToList();
+                                                        <div class="col-12 col-sm-auto component-editable">
+                                                            <select onchange="document.getElementById('saveRule_@(Model.Rules[i].Id.ToString("N"))').click()"
+                                                                    placeholder="Choose a value"
+                                                                    class="@(isNewestArgument ? "argumentForRule" + Model.Rules[i].Id.ToString("N") : "")"
+                                                                    asp-for="@Model.Rules[i].RuleSequence[j].Arguments[k].Value">
+                                                                <option value="">...Choose an option...</option>
+                                                                @foreach (var value in allowedValues)
+                                                                {
+                                                                    <option value="@(value.Split(":")[0])">@(value.Split(":")[1])</option>
+                                                                }
+                                                            </select>
+                                                        </div>
+                                                    }
+                                                    else if (!Model.Rules[i].IsActivated
+                                                    && Model.Rules[i].RuleSequence[j].Arguments[k].Editable
+                                                    && !string.IsNullOrWhiteSpace(Model.Rules[i].RuleSequence[j].Arguments[k].AllowedValueRegex)
+                                                    && !Model.Rules[i].RuleSequence[j].Arguments[k].IsADateField)
+                                                    {
+                                                        var validationId = "a" + DateTime.Now.Ticks;
+                                                        <div class="col-12 col-sm-auto component-editable">
+                                                            <input asp-for="@Model.Rules[i].RuleSequence[j].Arguments[k].Value"
+                                                                   placeholder="Enter a value"
+                                                                   class="@(isNewestArgument ? "argumentForRule" + Model.Rules[i].Id.ToString("N") : "")"
+                                                                   pattern="@Model.Rules[i].RuleSequence[j].Arguments[k].AllowedValueRegex"
+                                                                   onchange="if (CheckValid(event, '@validationId')) document.getElementById('saveRule_@(Model.Rules[i].Id.ToString("N"))').click()" />
+                                                            <span id="@validationId" class="text-danger d-none">@Model.Rules[i].RuleSequence[j].Arguments[k].FriendlyValidationMessageForRegex</span>
+                                                        </div>
+                                                    }
+                                                    else if (!Model.Rules[i].IsActivated
+                                                    && Model.Rules[i].RuleSequence[j].Arguments[k].Editable
+                                                    && Model.Rules[i].RuleSequence[j].Arguments[k].IsADateField)
+                                                    {
+                                                        <div class="col-12 col-sm-auto component-editable">
+                                                            <input onchange="document.getElementById('saveRule_@(Model.Rules[i].Id.ToString("N"))').click()" type="date"
+                                                                   placeholder="Choose a date"
+                                                                   class="@(isNewestArgument ? "argumentForRule" + Model.Rules[i].Id.ToString("N") : "")"
+                                                                   asp-for="@Model.Rules[i].RuleSequence[j].Arguments[k].Value" />
+                                                        </div>
+                                                    }
+                                                    else if (!Model.Rules[i].IsActivated
+                                                    && Model.Rules[i].RuleSequence[j].Arguments[k].Editable
+                                                    && !Model.Rules[i].RuleSequence[j].Arguments[k].IsADateField)
+                                                    {
+                                                        <div class="col-12 col-sm-auto component-editable">
+                                                            <input onchange="document.getElementById('saveRule_@(Model.Rules[i].Id.ToString("N"))').click()"
+                                                                   placeholder="Enter a value"
+                                                                   class="@(isNewestArgument ? "argumentForRule" + Model.Rules[i].Id.ToString("N") : "")"
+                                                                   asp-for="@Model.Rules[i].RuleSequence[j].Arguments[k].Value" />
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <input type="hidden" asp-for="@Model.Rules[i].RuleSequence[j].Arguments[k].Value" />
+                                                    }
+                                                }
+                                            }
+
+                                            @if (!Model.Rules[i].IsActivated)
+                                            {
+                                                <select id="nextComponents@(Model.Rules[i].Id.ToString("N"))" class="d-none">
+                                                    @for (var j = 0; j < Model.Rules[i].NextComponents.Count; j++)
+                                                    {
+                                                        <option value="@Model.Rules[i].NextComponents[j].Key">@Model.Rules[i].NextComponents[j].Value.Description</option>
+                                                    }
+                                                </select>
+
+                                                <div class="col-12 col-sm-auto component-editable">
+                                                    <input type="text"
+                                                           placeholder="Next rule step"
+                                                           id="componentInput@(Model.Rules[i].Id.ToString("N"))"
+                                                           data-attempt-focus-on="argumentForRule@(Model.Rules[i].Id.ToString("N"))"
+                                                           onkeydown="filterComponents(event, '@(Model.Rules[i].Id.ToString("N"))', 'nextComponents@(Model.Rules[i].Id.ToString("N"))')"
+                                                           autocomplete="off"
+                                                           onfocus="filterComponents(event, '@(Model.Rules[i].Id.ToString("N"))', 'nextComponents@(Model.Rules[i].Id.ToString("N"))')" />
+                                                    <div id="componentList@(Model.Rules[i].Id.ToString("N"))" class="component-list"></div>
+                                                </div>
+
+                                                <div class="d-none">
+                                                    <button id="addNewComponent@(Model.Rules[i].Id.ToString("N"))"
+                                                            class="btn btn-primary w-75"
+                                                            asp-controller="Rule"
+                                                            asp-action="AddNewComponent"
+                                                            asp-route-topLevelFieldId="@Model.CurrentField.TopLevelFieldId"
+                                                            asp-route-ruleid="@Model.Rules[i].Id"
+                                                            asp-route-nextcomponentkey=""
+                                                            onclick="SubmitAndRefreshPartial(event,'ruleContainer@(Model.CurrentField.TopLevelFieldId.ToString("N"))', 'ruleForm_@(Model.CurrentField.TopLevelFieldId.ToString("N"))')">
+                                                        Add New Component
+                                                    </button>
+                                                </div>
+                                                <div class="col-sm-auto align-self-center justify-content-center d-flex">
+                                                    <button id="removeLatestComponent@(Model.Rules[i].Id.ToString("N"))"
+                                                            class="btn btn-primary material-icons"
+                                                            asp-controller="Rule"
+                                                            asp-action="RemoveLatestComponent"
+                                                            asp-route-topLevelFieldId="@Model.CurrentField.TopLevelFieldId"
+                                                            asp-route-ruleid="@Model.Rules[i].Id"
+                                                            onclick="SubmitAndRefreshPartial(event,'ruleContainer@(Model.CurrentField.TopLevelFieldId.ToString("N"))', 'ruleForm_@(Model.CurrentField.TopLevelFieldId.ToString("N"))')">
+                                                        backspace
+                                                    </button>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <div class="d-none">
+                                        <button id="saveRule_@(Model.Rules[i].Id.ToString("N"))"
+                                                class="btn btn-primary w-75"
+                                                asp-controller="Rule"
+                                                asp-action="SaveRules"
+                                                asp-route-topLevelFieldId="@Model.CurrentField.TopLevelFieldId"
+                                                asp-route-ruleId="@Model.Rules[i].Id"
+                                                onclick="SubmitAndRefreshPartial(event,'ruleContainer@(Model.CurrentField.TopLevelFieldId.ToString("N"))', 'ruleForm_@(Model.CurrentField.TopLevelFieldId.ToString("N"))')">
+                                            Save Changes
+                                        </button>
+                                    </div>
+
+                                    <script>
+                                        document.getElementById("ruleForm_@(Model.CurrentField.TopLevelFieldId.ToString("N"))").addEventListener("keydown", function (e) {
+                                            if (e.key === "Enter") {
+                                                e.preventDefault();
+                                            }
+                                        });
+                                    </script>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</form>
+
+<div class="d-none">
+    <button id="refreshRules_@(Model.CurrentField.TopLevelFieldId.ToString("N"))"
+            type="submit"
+            class="btn btn-primary w-75"
+            asp-controller="Partial"
+            asp-action="GetBusinessUserComponent"
+            asp-route-topLevelFieldId="@Model.CurrentField.TopLevelFieldId"
+            onclick="RefreshPartial(event,'forBusinessUsers')">
+        Refresh Rules
+    </button>
+</div>

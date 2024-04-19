@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <Configurations>Debug;Release;DebugOfflineMode;ReleaseOfflineMode</Configurations>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="MailKit" Version="3.4.2" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="2.1.0" />
+    <PackageReference Include="MimeKit" Version="3.4.2" />
+    <PackageReference Include="Stripe.net" Version="41.19.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BusinessRules.Data\BusinessRules.Data.csproj" />
+    <ProjectReference Include="..\BusinessRules.Domain\BusinessRules.Domain.csproj" />
+    <ProjectReference Include="..\BusinessRules.Rules\BusinessRules.Rules.csproj" />
+  </ItemGroup>
+</Project>

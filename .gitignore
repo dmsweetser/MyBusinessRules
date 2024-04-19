@@ -1,0 +1,8 @@
+*.suo
+.suo
+.vs
+*.user
+_ReSharper.*
+bin
+obj
+packages

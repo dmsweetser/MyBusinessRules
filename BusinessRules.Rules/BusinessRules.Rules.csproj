@@ -1,0 +1,11 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <Configurations>Debug;Release;DebugOfflineMode;ReleaseOfflineMode</Configurations>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BusinessRules.Domain\BusinessRules.Domain.csproj" />
+  </ItemGroup>
+</Project>

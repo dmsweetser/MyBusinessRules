@@ -1,0 +1,45 @@
+﻿@using BusinessRules.TestMVC.Common;
+@model Settings
+
+@{
+    ViewData["Title"] = "Home";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome to the Policy Administration System</h1>
+</div>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    Settings
+                </div>
+                <div class="card-body">
+                    <form method="post" action="@Url.Action("ApplySettings", "Home")">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-3">
+                            <label for="MyBusinessRulesQuoteApiKey" class="form-label">Quote API Key</label>
+                            <input type="text" class="form-control" id="MyBusinessRulesQuoteApiKey" value="@Model.MyBusinessRulesQuoteApiKey" name="MyBusinessRulesQuoteApiKey" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="MyBusinessRulesPolicyApiKey" class="form-label">Policy API Key</label>
+                            <input type="text" class="form-control" id="MyBusinessRulesPolicyApiKey" value="@Model.MyBusinessRulesPolicyApiKey" name="MyBusinessRulesPolicyApiKey" required>
+                        </div>
+
+
+                        <div class="mb-3">
+                            <label for="MyBusinessRulesBaseUrl" class="form-label">Base URL</label>
+                            <input type="text" class="form-control" id="MyBusinessRulesBaseUrl" value="@Model.MyBusinessRulesBaseUrl" name="MyBusinessRulesBaseUrl" required>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Save Settings</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,516 @@
+﻿@using BusinessRules.Domain.Common;
+@using BusinessRules.Domain.DTO
+@using BusinessRules.Domain.Rules;
+@using BusinessRules.Domain.Rules.Component;
+@using BusinessRules.Domain.Services;
+@using Newtonsoft.Json
+@inject IBusinessRulesService service;
+@inject IHttpContextAccessor httpContextAccessor;
+@model BizField
+
+@{
+    var fieldIsReferencedByRule = false;
+
+    List<BizRule> foundRules = new();
+
+    if (Model.Id != Model.TopLevelFieldId)
+    {
+        foundRules =
+            await service.GetRules(Guid.Parse(httpContextAccessor.HttpContext.Session.GetString("CompanyId")), Model.TopLevelFieldId);
+        var rulesWithReferenceToField = foundRules.Where(x =>
+                                    x.RuleSequence.Any(y =>
+                                        y.Arguments.Any(z =>
+                                            z.Value == Model.Id.ToString()))).ToList();
+        if (rulesWithReferenceToField.Any())
+        {
+            fieldIsReferencedByRule = true;
+        }
+    }
+
+
+}
+<div id="fieldContainer@(Model.TopLevelFieldId.ToString("N"))"
+     class="fieldContainer shadow-sm p-1 mt-2 container d-none">
+    <div class="container mt-1 shadow-sm p-1 w-auto">
+
+        @if (Model.ParentFieldId == Guid.Empty)
+        {
+            <div class="row pt-3">
+                <div class="col-sm-auto mt-2">
+                    <h4>Top Level Field</h4>
+                </div>
+            </div>
+
+            <div class="row pb-3">
+                <div class="col-sm-auto">
+                    <h6>Below you can define a domain object that will be available to business users in their rules.</h6>
+                </div>
+                <div class="col-sm-auto">
+                    <span>NOTE: My Business Rules is capable of populating your top level field automatically from your first API call. To do this, you need to remove any existing rules and all child fields, so that only one top-level field is present. Then, make the API call from your app and in the process, the appropriate top level field will automatically be added here. Go to the <strong><a href="" onclick="document.getElementById('documentation-info-tab').click(); setTimeout(() => document.getElementById('navToggle').click(), 500);">Developer Docs</a></strong> tab to see how to make the API call.</span>
+                </div>
+            </div>
+
+            <div class="accordion" id="uploadAccordion@(Model.TopLevelFieldId.ToString("N"))">
+                <div class="accordion-item p-2">
+                    <h2 class="accordion-header" id="uploadHeading@(Model.TopLevelFieldId.ToString("N"))">
+                        @if (Model.RuleIds.Count > 0)
+                        {
+                            <button class="accordion-button collapsed font-weight-bold" disabled="disabled" type="button" data-bs-toggle="collapse" data-bs-target="#uploadBody@(Model.TopLevelFieldId.ToString("N"))" aria-expanded="false" aria-controls="uploadBody@(Model.TopLevelFieldId.ToString("N"))" onclick="saveAccordionState()">
+                                Build From My Own JSON&nbsp;<span class="font-italic">(PLEASE REMOVE ALL RULES FIRST)</span>
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="accordion-button collapsed font-weight-bold" type="button" data-bs-toggle="collapse" data-bs-target="#uploadBody@(Model.TopLevelFieldId.ToString("N"))" aria-expanded="false" aria-controls="uploadBody@(Model.TopLevelFieldId.ToString("N"))" onclick="saveAccordionState()">
+                                Build From My Own JSON
+                            </button>
+                        }
+                    </h2>
+                    <div id="uploadBody@(Model.TopLevelFieldId.ToString("N"))" class="accordion-collapse collapse" aria-labelledby="uploadHeading@(Model.TopLevelFieldId.ToString("N"))" data-bs-parent="#uploadAccordion@(Model.TopLevelFieldId.ToString("N"))">
+                        <div class="accordion-body">
+                            <div class="row">
+                                <p>Paste your JSON here:</p>
+                                <textarea id="serialized-object@(Model.TopLevelFieldId.ToString("N"))" class="w-100" rows="10"></textarea>
+                            </div>
+                            <div class="row w-100 mt-3">
+                                <a class="btn btn-primary w-50 m-auto" onclick="uploadSerializedObject(event, 'serialized-object@(Model.TopLevelFieldId.ToString("N"))')">Upload</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <input asp-for="@Model.ParentFieldId" type="hidden" />
+        <input asp-for="@Model.Id" type="hidden" />
+        <input asp-for="@Model.TopLevelFieldId" type="hidden" />
+
+        @if (Model.ParentFieldId == Guid.Empty)
+        {
+            <div class="accordion @(FeatureFlags.OfflineMode ? "d-none" : "")" id="dynamicComponentsSection-@Model.Id">
+                <div class="accordion-item p-2">
+                    <h2 class="accordion-header" id="dynamicComponentsHeading-@Model.Id">
+                        <button class="accordion-button collapsed font-weight-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-dynamic-components-@Model.Id" aria-expanded="false" aria-controls="collapse-dynamic-components-@Model.Id" onclick="saveAccordionState()">
+                            Your Custom Components
+                        </button>
+                    </h2>
+                    <div id="collapse-dynamic-components-@Model.Id" class="accordion-collapse collapse" aria-labelledby="dynamicComponentsHeading-@Model.Id" data-bs-parent="#dynamicComponentsSection-@Model.Id">
+                        <div class="accordion-body">
+                            <div class="container">
+                                <h4>General Guidelines</h4>
+                                <ul>
+                                    <li>Do not include comments in your code - it gets minified before execution and comments cause trouble</li>
+                                    <li>Your code can either be simple expressions or complex logic, including function definitions</li>
+                                    <li>However, unless you are just using simple expressions, you MUST include a return statement at the end</li>
+                                    <li>Your code is being executed in a Node.js environment</li>
+                                </ul>
+                                <h4>Dynamic Comparator Guidelines</h4>
+                                <ul>
+                                    <li>Dynamic comparators let you evaluate a custom condition in Javascript</li>
+                                    <li>They have three variables available from My BusinessRules: <strong>x</strong>, which is a string representation of the preceding component value, <strong>y</strong>, which is a string representation of the following component value, and <strong>scopedIndex</strong>, which is the current record number when My Business Rules is operating on a collection</li>
+                                    <li>So for example, you can write "return x.includes(y);"</li>
+                                    <li>But you are not limited to this. You can do whatever you want inside the comparator</li>
+                                    <li>If your code fails, it will default to false</li>
+                                    <li>The only requirement is that you return true or false at the end</li>
+                                </ul>
+                                <h4>Dynamic Operand Guidelines</h4>
+                                <ul>
+                                    <li>Dynamic operands represent a computed value determined using Javascript</li>
+                                    <li>They have two variables available from My BusinessRules: <strong>currentField</strong>, which is a serialized version of the entire field defined in the app, and <strong>scopedIndex</strong>, which is the current record number when My Business Rules is operating on a collection</li>
+                                    <li>This means if you want to use it in your function, you should use "JSON.parse(currentField)" first</li>
+                                    <li>Go to the Documentation page to see the current JSON structure of your field</li>
+                                    <li>You can do whatever you want in your operand code, including using fetch to call external APIs</li>
+                                    <li>If your code fails, it will throw an exception and rule execution will fail</li>
+                                    <li>The only requirement is that you return a string at the end</li>
+                                </ul>
+                            </div>
+                            <div class="container">
+                                <div class="row">
+                                    <div class="col-sm align-self-center justify-content-center d-flex">
+                                        <button id="addNewDynamicComparator@(Model.TopLevelFieldId.ToString("N"))"
+                                                type="submit"
+                                                class="btn btn-primary w-100 m-3"
+                                                asp-controller="Field"
+                                                asp-action="AddNewDynamicComponent"
+                                                asp-route-parentfieldid="@Model.Id"
+                                                asp-route-isComparator="true"
+                                                onclick="SubmitAndRefreshPartial(event,'forDevelopers', 'developerForm_@(Model.TopLevelFieldId.ToString("N"))', ['refreshRules_@(Model.TopLevelFieldId.ToString("N"))', 'refreshEndUserComponent_@(Model.TopLevelFieldId.ToString("N"))']);">
+                                            Add New Comparison Component
+                                        </button>
+                                    </div>
+                                    <div class="col-sm align-self-center justify-content-center d-flex">
+                                        <button id="addNewDynamicOperator@(Model.TopLevelFieldId.ToString("N"))"
+                                                type="submit"
+                                                class="btn btn-primary w-100 m-3"
+                                                asp-controller="Field"
+                                                asp-action="AddNewDynamicComponent"
+                                                asp-route-parentfieldid="@Model.Id"
+                                                asp-route-isComparator="false"
+                                                onclick="SubmitAndRefreshPartial(event,'forDevelopers', 'developerForm_@(Model.TopLevelFieldId.ToString("N"))', ['refreshRules_@(Model.TopLevelFieldId.ToString("N"))', 'refreshEndUserComponent_@(Model.TopLevelFieldId.ToString("N"))']);">
+                                            Add New Operand (a selectable "thing" in a rule)
+                                        </button>
+                                    </div>
+                                </div>
+
+                                @if (Model.DynamicComponents.Count > 0)
+                                {
+
+                                    <div class="green-border p-2 m-2">
+                                        @for (int i = 0; i < Model.DynamicComponents.Count; i++)
+                                        {
+                                            <div class="accordion-item p-2">
+                                                <h2 class="accordion-header" id="dynamicComponentsHeading-@Model.DynamicComponents[i].Id-@i">
+                                                    <button name="dynamic@(i)" class="accordion-button collapsed font-weight-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-dynamic-components-@Model.DynamicComponents[i].Id-@i" aria-expanded="false" aria-controls="collapse-dynamic-components-@Model.DynamicComponents[i].Id-@i" onclick="saveAccordionState()">
+                                                        @Model.DynamicComponents[i].Description
+                                                    </button>
+                                                </h2>
+                                                <div id="collapse-dynamic-components-@Model.DynamicComponents[i].Id-@i" class="accordion-collapse collapse" aria-labelledby="dynamicComponentsHeading-@Model.DynamicComponents[i].Id-@i">
+                                                    <div class="accordion-body">
+                                                        <input asp-for="@Model.DynamicComponents[i].Id" type="hidden" />
+                                                        <input asp-for="@Model.DynamicComponents[i].DefinitionId" type="hidden" />
+                                                        <div class="container form-group row mt-1">
+                                                            <div class="col-sm-4 mt-1">
+                                                                <label asp-for="@Model.DynamicComponents[i].Description">Description for the Business User:</label>
+                                                            </div>
+                                                            <div class="col-sm-8 mt-1">
+                                                                <input onchange="document.getElementById('saveField_@(Model.TopLevelFieldId.ToString("N"))').click(); document.getElementsByName('dynamic@(i)')[0].innerText = event.target.value;" asp-for="@Model.DynamicComponents[i].Description" class="form-control" />
+                                                            </div>
+                                                        </div>
+                                                        <div class="container form-group row mt-1">
+                                                            <div class="row mb-2">
+                                                                <div class="col-auto mt-2">
+                                                                    <label asp-for="@Model.DynamicComponents[i].Body">Function Body:</label>
+                                                                </div>
+                                                                <div class="col">
+                                                                    <button id="save-@Model.DynamicComponents[i].Id"
+                                                                            class="btn btn-primary">
+                                                                        Save Changes
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                            <div class="row">
+                                                                <input class="hidden-@(Model.DynamicComponents[i].Id)" type="hidden" asp-for="@Model.DynamicComponents[i].Body" />
+                                                                <textarea class="@Model.DynamicComponents[i].Id">@Model.DynamicComponents[i].Body</textarea>
+                                                            </div>
+                                                            <script>
+                                                                // Get the textarea element by its id
+                                                                var textarea@(i) = document.getElementsByClassName("@(Model.DynamicComponents[i].Id)")[0];
+                                                                var editor@(i) = CodeMirror.fromTextArea(textarea@(i), {
+                                                                    mode: "javascript", // Set the language mode
+                                                                    lineNumbers: true, // Show line numbers
+                                                                    gutters: ["CodeMirror-lint-markers"], // Show lint markers
+                                                                    lint: {
+                                                                        esversion: 6
+                                                                    },
+                                                                    autoRefresh: true // Enable auto refresh
+                                                                });
+
+                                                                document.getElementById("save-@(Model.DynamicComponents[i].Id)").addEventListener("click", function (event) {
+                                                                    saveCodeMirrorContent(event, editor@(i));
+                                                                });
+
+                                                                // Function to save CodeMirror content to the textarea
+                                                                function saveCodeMirrorContent(event, currentEditor) {
+                                                                    event.preventDefault();
+                                                                    event.stopPropagation();
+                                                                    var hiddenElementId = event.target.id.replace("save-", "hidden-");
+                                                                    var hiddenElement = document.getElementsByClassName(hiddenElementId)[0];
+                                                                    hiddenElement.value = currentEditor.getValue();
+                                                                    document.getElementById('saveField_@(Model.TopLevelFieldId.ToString("N"))').click();
+                                                                }
+
+                                                                // Add a click event listener to the "Save" button
+                                                                document.getElementById("save-@(Model.DynamicComponents[i].Id)").addEventListener('click', saveCodeMirrorContent);
+                                                            </script>
+                                                        </div>
+                                                        @if (foundRules.Any(x => x.RuleSequence.Any(y => y.DefinitionId == Model.DynamicComponents[i].DefinitionId)))
+                                                        {
+                                                            <div class="container form-group row mt-1">
+                                                                <button id="removeDynamicComponent-@Model.DynamicComponents[i].Id"
+                                                                        type="submit"
+                                                                        disabled="disabled"
+                                                                        class="btn btn-primary w-100 m-3"
+                                                                        asp-controller="Field"
+                                                                        asp-action="RemoveDynamicComponent"
+                                                                        asp-route-parentFieldId="@Model.Id"
+                                                                        asp-route-componentId="@Model.DynamicComponents[i].Id"
+                                                                        onclick="SubmitAndRefreshPartial(event,'forDevelopers', 'developerForm_@(Model.TopLevelFieldId.ToString("N"))', ['refreshRules_@(Model.TopLevelFieldId.ToString("N"))', 'refreshEndUserComponent_@(Model.TopLevelFieldId.ToString("N"))']);">
+                                                                    Remove Component (Please remove from referenced rules first)
+                                                                </button>
+                                                            </div>
+                                                        }
+                                                        else
+                                                        {
+                                                            <div class="container form-group row mt-1">
+                                                                <button id="removeDynamicComponent-@Model.DynamicComponents[i].Id"
+                                                                        type="submit"
+                                                                        class="btn btn-primary w-100 m-3"
+                                                                        asp-controller="Field"
+                                                                        asp-action="RemoveDynamicComponent"
+                                                                        asp-route-parentFieldId="@Model.Id"
+                                                                        asp-route-componentId="@Model.DynamicComponents[i].Id"
+                                                                        onclick="ConfirmBeforeExecuting(event, 'Are you sure you want to  remove your custom component?', () => SubmitAndRefreshPartial(event,'forDevelopers', 'developerForm_@(Model.TopLevelFieldId.ToString("N"))', ['refreshRules_@(Model.TopLevelFieldId.ToString("N"))', 'refreshEndUserComponent_@(Model.TopLevelFieldId.ToString("N"))']))">
+                                                                    Remove Component
+                                                                </button>
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="container form-group row mt-1">
+            <div class="col-sm-3 mt-2">
+                <label asp-for="@Model.SystemName">System Identifier:</label>
+            </div>
+            <div class="col-sm mt-1">
+                @if (Model.ParentFieldId == Model.TopLevelFieldId)
+                {
+                    <input onchange="document.getElementById('saveField_@(Model.TopLevelFieldId.ToString("N"))').click();" asp-for="@Model.SystemName" class="form-control" />
+                }
+                else
+                {
+                    <input onchange="document.getElementById('saveField_@(Model.TopLevelFieldId.ToString("N"))').click();" asp-for="@Model.SystemName" class="form-control" />
+                }
+            </div>
+
+            @if (Model.ParentFieldId != Guid.Empty && !fieldIsReferencedByRule)
+            {
+                <div class="col-sm-auto mt-1">
+                    <button type="submit"
+                            class="btn btn-primary"
+                            asp-controller="Field"
+                            asp-action="RemoveField"
+                            asp-route-parentfieldid="@Model.ParentFieldId"
+                            asp-route-childfieldid="@Model.Id"
+                            onclick="ConfirmBeforeExecuting(event, 'Are you sure you want to remove this field and all its children?', () => SubmitAndRefreshPartial(event,'forDevelopers', 'developerForm_@(Model.TopLevelFieldId.ToString("N"))', ['refreshRules_@(Model.TopLevelFieldId.ToString("N"))', 'refreshEndUserComponent_@(Model.TopLevelFieldId.ToString("N"))']))">
+                        Remove
+                    </button>
+                </div>
+            }
+            else if (Model.ParentFieldId != Guid.Empty && fieldIsReferencedByRule)
+            {
+                <div class="col-sm-auto mt-1">
+                    <button type="submit"
+                            class="btn btn-primary"
+                            asp-controller="Field"
+                            asp-action="RemoveField"
+                            asp-route-parentfieldid="@Model.ParentFieldId"
+                            asp-route-childfieldid="@Model.Id"
+                            disabled="disabled"
+                            onclick="ConfirmBeforeExecuting(event, 'Are you sure you want to remove this field and all its children?', () => SubmitAndRefreshPartial(event,'forDevelopers', 'developerForm_@(Model.TopLevelFieldId.ToString("N"))', ['refreshRules_@(Model.TopLevelFieldId.ToString("N"))', 'refreshEndUserComponent_@(Model.TopLevelFieldId.ToString("N"))']))">
+                        Remove (Please remove from referenced rules first)
+                    </button>
+                </div>
+            }
+        </div>
+        <div class="container form-group row mt-1">
+            <div class="col-sm-3 mt-2">
+                <label asp-for="@Model.FriendlyName">Display Name:</label>
+            </div>
+            <div class="col-sm mt-1">
+                <input onchange="document.getElementById('saveField_@(Model.TopLevelFieldId.ToString("N"))').click()" asp-for="@Model.FriendlyName" class="form-control" />
+            </div>
+        </div>
+        <div class="container form-group row mt-1 ml-4 pl-4">
+            <div class="col form-check form-switch mt-2">
+                <input onchange="document.getElementById('saveField_@(Model.TopLevelFieldId.ToString("N"))').click()"
+                       asp-for="@Model.DisplayForBusinessUser" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" asp-for="@Model.DisplayForBusinessUser">Show To Business User</label>
+            </div>
+        </div>
+
+        @if (Model.ChildFields.Count == 0)
+        {
+            <fieldset @(Model.IsADateField ? "disabled=\"disabled\"" : "")>
+                <div class="container form-group row mt-1">
+                    <div class="col-sm-4 mt-1">
+                        <label asp-for="@Model.AllowedValueRegex">Allowed Value (Javascript Regex):</label>
+                    </div>
+                    <div class="col-sm-8 mt-1">
+                        <input asp-for="@Model.AllowedValueRegex"
+                               onchange="document.getElementById('saveField_@(Model.TopLevelFieldId.ToString("N"))').click()"
+                               class="form-control" />
+                    </div>
+                </div>
+                <div class="container form-group row mt-1">
+                    <div class="col-sm-4 mt-1">
+                        <label asp-for="@Model.FriendlyValidationMessageForRegex">Friendly Validation Message for Regex:</label>
+                    </div>
+                    <div class="col-sm-8 mt-1">
+                        <input onchange="document.getElementById('saveField_@(Model.TopLevelFieldId.ToString("N"))').click()" asp-for="@Model.FriendlyValidationMessageForRegex" class="form-control" />
+                    </div>
+                </div>
+            </fieldset>
+            <div class="container form-group row mt-1">
+                <div class="col-sm-auto form-check form-switch ml-4 pl-5 mt-1">
+                    <input onclick="document.getElementById('saveField_@(Model.TopLevelFieldId.ToString("N"))').click()" asp-for="@Model.IsACollection" type="checkbox" class="form-check-input" />
+                    <label class="form-check-label" asp-for="@Model.IsADateField">Is this field part of a collection?</label>
+                </div>
+            </div>
+            <div class="container form-group row mt-1">
+                <div class="col-sm-auto form-check form-switch ml-4 pl-5 mt-1">
+                    <input onclick="document.getElementById('saveField_@(Model.TopLevelFieldId.ToString("N"))').click()" asp-for="@Model.IsADateField" type="checkbox" class="form-check-input" />
+                    <label class="form-check-label" asp-for="@Model.IsADateField">Is this a date field?</label>
+                </div>
+            </div>
+            <div class="container form-group row mt-1">
+                <div class="col-sm-auto mt-2">
+                    <label asp-for="@Model.ExpectedDateFormat">What is the expected date format? (<a href="https://learn.microsoft.com/en-us/dotnet/standard/base-types/custom-date-and-time-format-strings" target="_blank">Available Options</a>)</label>
+                </div>
+                <div class="col-sm-6 mt-1">
+                    <input @(
+                        Model.IsADateField ? "" : "disabled=\"disabled\""
+                        ) onchange="document.getElementById('saveField_@(Model.TopLevelFieldId.ToString("N"))').click()" asp-for="@Model.ExpectedDateFormat" class="form-control" placeholder="Example: MM/dd/yyyy hh:mm:ss" />
+                </div>
+            </div>
+            <div class="container form-group row mt-1 @(Model.IsADateField ? "d-none" : "")">
+                <div class="col-sm-4 mt-1">
+                    <label asp-for="@Model.AllowedValues">Allowed Values (Drop-down):</label>
+                </div>
+
+                <div class="col-sm-8 mt-1">
+                    <table class="table table-bordered allowed-values-table" id="@(Model.Id)-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">System Value</th>
+                                <th scope="col">Display Value</th>
+                                <th scope="col"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- The table rows will be dynamically generated -->
+                        </tbody>
+                    </table>
+                    <a class="btn btn-primary" id="@(Model.Id)-add-row-button" onclick="addTableRow('@(Model.Id)', '@(Model.TopLevelFieldId.ToString("N"))', '', '')">Add Row</a>
+                    <a class="btn btn-primary"
+                       id="@(Model.Id)bulk-import"
+                       data-bs-toggle="modal"
+                       data-bs-target="#a@(Model.Id)import-modal">
+                        Bulk Import
+                    </a>
+                    <input type="hidden" asp-for="@Model.AllowedValues" class="@(Model.Id)-table-value" onchange="document.getElementById('saveField_@(Model.TopLevelFieldId.ToString("N"))').click()" />
+                </div>
+
+                <script>
+                    initializeTable('@(Model.Id)', '@(Model.TopLevelFieldId.ToString("N"))');
+                </script>
+
+                <div class="modal fade" id="a@(Model.Id)import-modal" tabindex="-1" aria-labelledby="a@(Model.Id)import-modal-label" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="a@(Model.Id)import-modal-label">Bulk Import Allowed Values</h5>
+                                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row mb-2">
+                                    <h6>Please add allowed comma-separated key/value pairs below, one per line. You also have the option to directly paste an HTML Select element, and the options will be automatically parsed out for you.</h6>
+                                </div>
+                                <textarea onkeydown="event.stopImmediatePropagation()" class="form-control pre" id="a@(Model.Id)-import-textbox" rows="10" cols="40"></textarea>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary" onclick="bulkImport('@(Model.Id)','@(Model.TopLevelFieldId.ToString("N"))')" data-bs-dismiss="modal" id="a@(Model.Id)import-button">Import</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="container mt-1 shadow-sm w-auto">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <div class="accordion" id="childrenSection-@Model.Id">
+                        <div class="accordion-item p-2">
+                            <h2 class="accordion-header" id="childrenHeading-@Model.Id">
+                                <button class="accordion-button collapsed font-weight-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-@Model.Id" aria-expanded="false" aria-controls="collapse-@Model.Id" onclick="saveAccordionState()">
+                                    Children
+                                </button>
+                            </h2>
+                            <div id="collapse-@Model.Id" class="accordion-collapse collapse" aria-labelledby="childrenHeading-@Model.Id" data-bs-parent="#childrenSection-@Model.Id">
+                                <div class="accordion-body">
+                                    <div class="container w-100">
+                                        @if (fieldIsReferencedByRule && Model.ChildFields.Count == 0)
+                                        {
+                                            <div class="col-sm align-self-center justify-content-center d-flex">
+                                                <button id="addNewChildField@(Model.Id.ToString("N"))"
+                                                        type="submit"
+                                                        class="btn btn-primary w-100"
+                                                        asp-controller="Field"
+                                                        asp-action="AddNewChildField"
+                                                        asp-route-parentfieldid="@Model.Id"
+                                                        disabled="disabled"
+                                                        onclick="SubmitAndRefreshPartial(event,'forDevelopers', 'developerForm_@(Model.TopLevelFieldId.ToString("N"))', ['refreshRules_@(Model.TopLevelFieldId.ToString("N"))', 'refreshEndUserComponent_@(Model.TopLevelFieldId.ToString("N"))']);">
+                                                    Add New Child Field (Please remove from referenced rules first)
+                                                </button>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="col-sm align-self-center justify-content-center d-flex">
+                                                <button id="addNewChildField@(Model.TopLevelFieldId.ToString("N"))"
+                                                        type="submit"
+                                                        class="btn btn-primary w-100"
+                                                        asp-controller="Field"
+                                                        asp-action="AddNewChildField"
+                                                        asp-route-parentfieldid="@Model.Id"
+                                                        onclick="SubmitAndRefreshPartial(event,'forDevelopers', 'developerForm_@(Model.TopLevelFieldId.ToString("N"))', ['refreshRules_@(Model.TopLevelFieldId.ToString("N"))', 'refreshEndUserComponent_@(Model.TopLevelFieldId.ToString("N"))']);">
+                                                    Add New Child Field
+                                                </button>
+                                            </div>
+                                        }
+
+                                        @for (int i = 0; i < Model.ChildFields.Count; i++)
+                                        {
+                                            <div class="green-border mt-1">
+                                                @Html.EditorFor(x => Model.ChildFields[i], "BizField.cshtml")
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Model.ParentFieldId == Guid.Empty)
+{
+    <div class="container w-auto align-self-center justify-content-center mt-2 d-none">
+        <button id="saveField_@(Model.TopLevelFieldId.ToString("N"))"
+                type="submit"
+                class="btn btn-primary w-75"
+                asp-controller="Field"
+                asp-action="SaveFieldChanges"
+                asp-route-topLevelFieldId="@Model.TopLevelFieldId"
+                onclick="SubmitAndRefreshPartial(event,'forDevelopers', 'developerForm_@(Model.TopLevelFieldId.ToString("N"))', ['refreshRules_@(Model.TopLevelFieldId.ToString("N"))', 'refreshEndUserComponent_@(Model.TopLevelFieldId.ToString("N"))']);">
+            Save Changes
+        </button>
+    </div>
+}
+
+<script>
+    document.getElementById("developerForm_@(Model.TopLevelFieldId.ToString("N"))").addEventListener("keydown", function (e) {
+        if (e.key === "Enter") {
+            e.preventDefault();
+        }
+    });
+</script>

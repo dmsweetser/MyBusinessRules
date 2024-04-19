@@ -1,0 +1,66 @@
+{
+  "version": "1.0",
+  "defaultProvider": "unpkg",
+  "libraries": [
+    {
+      "library": "jquery-ui@1.13.2",
+      "destination": "wwwroot/lib/jquery-ui/",
+      "files": [
+        "dist/jquery-ui.min.js",
+        "dist/themes/base/images/ui-icons_444444_256x240.png",
+        "dist/themes/base/images/ui-icons_555555_256x240.png",
+        "dist/themes/base/images/ui-icons_777620_256x240.png",
+        "dist/themes/base/images/ui-icons_777777_256x240.png",
+        "dist/themes/base/images/ui-icons_cc0000_256x240.png",
+        "dist/themes/base/images/ui-icons_ffffff_256x240.png",
+        "dist/themes/base/jquery-ui.css",
+        "dist/themes/base/jquery-ui.min.css",
+        "dist/themes/base/theme.css",
+        "dist/themes/south-street/images/ui-bg_glass_55_fcf0ba_1x400.png",
+        "dist/themes/south-street/images/ui-bg_gloss-wave_100_ece8da_500x100.png",
+        "dist/themes/south-street/images/ui-bg_highlight-hard_100_f5f3e5_1x100.png",
+        "dist/themes/south-street/images/ui-bg_highlight-hard_100_fafaf4_1x100.png",
+        "dist/themes/south-street/images/ui-bg_highlight-hard_15_459e00_1x100.png",
+        "dist/themes/south-street/images/ui-bg_highlight-hard_95_cccccc_1x100.png",
+        "dist/themes/south-street/images/ui-bg_highlight-soft_25_67b021_1x100.png",
+        "dist/themes/south-street/images/ui-bg_highlight-soft_95_ffedad_1x100.png",
+        "dist/themes/south-street/images/ui-bg_inset-soft_15_2b2922_1x100.png",
+        "dist/themes/south-street/images/ui-icons_808080_256x240.png",
+        "dist/themes/south-street/images/ui-icons_847e71_256x240.png",
+        "dist/themes/south-street/images/ui-icons_8DC262_256x240.png",
+        "dist/themes/south-street/images/ui-icons_cd0a0a_256x240.png",
+        "dist/themes/south-street/images/ui-icons_eeeeee_256x240.png",
+        "dist/themes/south-street/images/ui-icons_ffffff_256x240.png",
+        "dist/themes/south-street/jquery-ui.css",
+        "dist/themes/south-street/jquery-ui.min.css",
+        "dist/themes/south-street/theme.css",
+        "dist/jquery-ui.js"
+      ]
+    },
+    {
+      "provider": "cdnjs",
+      "library": "bootstrap@5.2.3",
+      "destination": "wwwroot/lib/bootstrap/"
+    },
+    {
+      "library": "jquery@3.6.3",
+      "destination": "wwwroot/lib/jquery/"
+    },
+    {
+      "provider": "cdnjs",
+      "library": "material-components-web@14.0.0",
+      "destination": "wwwroot/lib/material-components-web/"
+    },
+    {
+      "provider": "cdnjs",
+      "library": "codemirror@6.65.7",
+      "destination": "wwwroot/lib/codemirror/"
+    }
+  ,
+{
+  "provider": "unpkg",
+  "library": "jshint@2.13.6",
+  "destination": "wwwroot/lib/jshint/"
+}
+]
+}

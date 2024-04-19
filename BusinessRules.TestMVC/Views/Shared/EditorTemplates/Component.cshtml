@@ -1,0 +1,99 @@
+﻿@using System;
+@using Newtonsoft.Json;
+
+@model Component
+
+@if (Model is null)
+{
+    return;
+}
+
+@{
+    var allowedValues = new List<string>();
+
+    // Determine input type based on properties
+    if (Model.AllowedValues == "null" || Model.AllowedValues == "[]")
+    {
+        allowedValues = new List<string>();
+    }
+    else
+    {
+        if (Model.AllowedValues is not null
+            && Model.AllowedValues.StartsWith("["))
+        {
+            allowedValues = JsonConvert.DeserializeObject<List<string>>(Model.AllowedValues);
+        }
+    }
+
+    var inputType = Model.IsReadOnly ? "hidden" : allowedValues.Count > 0 ? "select" : "text";
+    var inputClass = Model.IsReadOnly ? "form-control-plaintext" : "form-control";
+
+    var value = Model.Value;
+
+    if (DateTime.TryParse(Model.Value, out var parsedDate))
+    {
+        value = parsedDate.ToString("yyyy-MM-dd");
+        inputType = "date";
+    }
+
+    var inputId = "input_" + Guid.NewGuid().ToString("N");
+
+    var isBoolean = bool.TryParse(value, out _);
+}
+
+<div class="mb-3">
+    @if (!Model.IsHidden)
+    {
+        <label for="@inputId" class="form-label"><strong>@Model.Name</strong></label>
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+        {
+            <div class="text-danger">@Model.ErrorMessage</div>
+        }
+
+        @if (isBoolean)
+        {
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="@inputId" @(value.ToLower() == "true" ? "checked" : "") onchange="document.getElementById('@Html.IdFor(model => model.Value)').value = this.checked;">
+                <label class="form-check-label" for="@inputId">@Model.Name</label>
+            </div>
+        }
+        else if (inputType == "select")
+        {
+            <select class="@inputClass form-select" id="@inputId" onchange="document.getElementById('@Html.IdFor(model => model.Value)').value = this.value;">
+                @foreach (var optionValue in allowedValues)
+                {
+                    if (Model.Value == optionValue.Split('|')[0])
+                    {
+                        <option value="@optionValue.Split('|')[0]" selected>@optionValue.Split('|')[1]</option>
+                    }
+                    else
+                    {
+                        <option value="@optionValue.Split('|')[0]">@optionValue.Split('|')[1]</option>
+                    }
+                }
+            </select>
+        }
+        else
+        {
+            if (inputType == "date")
+            {
+                <input type="date" value="@value" class="@inputClass" id="@inputId" onchange="document.getElementById('@Html.IdFor(model => model.Value)').value = this.value;" />
+            }
+            else
+            {
+                <input type="@inputType" id="@inputId" value="@value" class="@inputClass" onchange="document.getElementById('@Html.IdFor(model => model.Value)').value = this.value;" />
+            }
+        }
+    }
+
+    @Html.HiddenFor(model => model.IsHidden)
+    @Html.HiddenFor(model => model.IsReadOnly)
+    @Html.HiddenFor(model => model.Name)
+    @Html.HiddenFor(model => model.FieldName)
+    @Html.HiddenFor(model => model.ErrorMessage)
+
+    @Html.HiddenFor(model => model.AllowedValues)
+
+    @Html.HiddenFor(model => model.Value)
+
+</div>

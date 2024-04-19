@@ -1,0 +1,303 @@
+﻿@using BusinessRules.Domain.Common;
+@using BusinessRules.Domain.DTO
+@using BusinessRules.UI.Common;
+@using Newtonsoft.Json;
+@model SystemViewModel
+
+@{
+    Layout = null;
+}
+
+<div class="row text-center mt-4 mb-2">
+    <h3>
+        Live Demo for
+        <select id="liveDemoSelector" class="fieldList ml-2 mr-2 p-1" onchange="SetVisibleApp(event.target)">
+            <option value="">Please select</option>
+            @foreach (var app in Model.Applications)
+            {
+                <option value="@app.TopLevelField.Id.ToString("N")">@(app.TopLevelField.FriendlyName)</option>
+            }
+        </select>
+    </h3>
+</div>
+<hr />
+
+@foreach (var app in Model.Applications)
+{
+    app.EndUserDTO.CurrentField = JsonConvert.DeserializeObject<BizField>(JsonConvert.SerializeObject(app.EndUserDTO.CurrentField));
+    app.EndUserDTO.CurrentField.DynamicComponents = new();
+
+    <div id="endUserContainer@(app.TopLevelField.Id.ToString("N"))" class="endUserContainer container d-none">
+        <div class="container mt-5 w-100">
+
+            <div class="btn-group row w-100">
+                <div class="col">
+                    <button type="button" class="btn btn-primary w-100" id="runProductionRules">Run Production Rules</button>
+                </div>
+                <div class="col">
+                    <button type="button" class="btn btn-secondary w-100" id="runTestRules">Run Test Rules</button>
+                </div>
+            </div>
+
+            <input type="hidden" id="ruleActionEndpoint" value="ExecuteRules">
+
+            <script>
+                document.getElementById('runProductionRules').addEventListener('click', function () {
+                    document.getElementById('ruleActionEndpoint').value = 'ExecuteRules';
+                    document.getElementById('runTestRules').classList.remove('btn-primary');
+                    document.getElementById('runTestRules').classList.add('btn-secondary');
+                    document.getElementById('runProductionRules').classList.remove('btn-secondary');
+                    document.getElementById('runProductionRules').classList.add('btn-primary');
+                });
+                document.getElementById('runTestRules').addEventListener('click', function () {
+                    document.getElementById('ruleActionEndpoint').value = 'ExecuteTestRules';
+                    document.getElementById('runProductionRules').classList.remove('btn-primary');
+                    document.getElementById('runProductionRules').classList.add('btn-secondary');
+                    document.getElementById('runTestRules').classList.remove('btn-secondary');
+                    document.getElementById('runTestRules').classList.add('btn-primary');
+                });
+            </script>
+        </div>
+
+        <div class="mt-5">
+            <div class="container align-self-center justify-content-center d-flex mt-1">
+                <h6>Make changes to the fields below, and see your business rules execute in real-time</h6>
+            </div>
+
+            <form id="endUserForm_@(app.TopLevelField.Id.ToString("N"))">
+            </form>
+
+            <div class="container w-auto align-self-center justify-content-center mt-2 d-none">
+                <button id="refreshEndUserComponent_@(app.TopLevelField.Id.ToString("N"))"
+                        type="submit"
+                        class="btn btn-primary w-75"
+                        asp-controller="Partial"
+                        asp-action="GetEndUserComponent"
+                        asp-route-toplevelfieldid="@app.TopLevelField.TopLevelFieldId"
+                        onclick="SubmitAndRefreshPartial(event,'forEndUsers', 'endUserForm_@(app.TopLevelField.Id.ToString("N"))');">
+                    Refresh End User Component
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="shadow-sm p-1 mt-1">
+        <div id="fieldContents_@(app.TopLevelField.Id.ToString("N"))">
+        </div>
+    </div>
+
+
+    <script id="bootstrapLiveDemo_@(app.TopLevelField.Id.ToString("N"))" type="text/javascript">
+
+        var endUserDtoString = '@(Html.Raw(JsonConvert.SerializeObject(app.EndUserDTO.CurrentField)))';
+        var parsedDto = JSON.parse(endUserDtoString);
+        document.getElementById("endUserForm_@(app.TopLevelField.Id.ToString("N"))").innerHTML = generateHtml(parsedDto);
+
+        function generateHtml(model, parentPath = "") {
+            if (!model || !model.SystemName) {
+                return "";
+            }
+
+            var fieldLabel = model.FriendlyName;
+            if (fieldLabel == null) fieldLabel = model.SystemName;
+            if (fieldLabel != "") fieldLabel += ":";
+            var escapedSystemName = model.SystemName.replace(/\./g, '|');
+            const fullPath = parentPath ? `${parentPath}.${escapedSystemName}` : escapedSystemName;
+
+            let inputBlock = "";
+            if (model.AllowedValues && model.ChildFields.length == 0) {
+                const allowedValues = model.AllowedValues.split('|');
+                const selectOptions = allowedValues.map(value => {
+                    const [optionValue, optionText] = value.split(':');
+                    return `<option value="${optionValue}">${optionText}</option>`;
+                }).join('\n');
+
+                inputBlock = `
+                                            <div class="col-sm-9">
+                                                <select onchange="ExecuteRules()"
+                                                                data-json-path="${fullPath}"
+                                                        data-system-name="${model.SystemName}"
+                                                        class="form-select w-auto">
+                                                    <option value="">...Choose an option...</option>
+                                                    ${selectOptions}
+                                                </select>
+                                            </div>
+                                        `;
+            } else if (model.AllowedValueRegex && model.ChildFields.length == 0) {
+                const validationId = "a" + Date.now();
+                inputBlock = `
+                                            <div class="col-sm-9">
+                                                <input class="form-control" pattern="${model.AllowedValueRegex}"
+                                                       onchange="if (CheckValid(event, '${validationId}')) ExecuteRules()"
+                                                               data-json-path="${fullPath}"
+                                                       data-system-name="${model.SystemName}" />
+                                                <span id="${validationId}" class="text-danger d-none">${model.FriendlyValidationMessageForRegex}</span>
+                                            </div>
+                                        `;
+            } else if (model.ChildFields.length == 0 && !model.IsADateField) {
+                inputBlock = `
+                                            <div class="col-sm-9">
+                                                <input class="form-control" onchange="ExecuteRules()"
+                                                               data-json-path="${fullPath}"
+                                                       data-system-name="${model.SystemName}" />
+                                            </div>
+                                        `;
+            } else if (model.ChildFields.length == 0 && model.IsADateField) {
+                inputBlock = `
+                                            <div class="col-sm-9">
+                                                <input class="form-control" onchange="ExecuteRules()"
+                                                       type="date"
+                                                               data-json-path="${fullPath}"
+                                                       data-system-name="${model.SystemName}" />
+                                            </div>
+                                        `;
+            }
+
+            let childElements = "";
+            for (const childField of model.ChildFields) {
+                const childElement = generateHtml(childField, fullPath);
+                childElements += `
+                                            <div class="container mt-1 shadow-sm p-1 ml-0 ml-md-5 w-auto">
+                                                ${childElement}
+                                            </div>
+                                        `;
+            }
+
+            return `
+                                        <div class="shadow-sm p-1 mt-1">
+                                            <div class="container shadow-sm p-1">
+                                                <div class="container form-group row">
+                                                    <div class="col-sm-3 mt-1">
+                                                        <label><strong>${fieldLabel}</strong></label>
+                                                    </div>
+                                                    ${inputBlock}
+                                                </div>
+                                            </div>
+                                            ${childElements}
+                                        </div>
+                                    `;
+        }
+
+        var generationScript = document.querySelector("#bootstrapLiveDemo_@(app.TopLevelField.Id.ToString("N"))");
+        generationScript.parentNode.removeChild(generationScript);
+
+    </script>
+
+    <script type="text/javascript">
+
+        function CheckValid(event, validationId) {
+            if (!event.target.checkValidity()
+                && document.getElementById(validationId)) {
+                event.preventDefault();
+                document.getElementById(validationId).classList.remove("d-none");
+                return false;
+            } else if (document.getElementById(validationId)) {
+                document.getElementById(validationId).classList.add("d-none");
+                return true;
+            }
+        }
+
+        function ExecuteRules() {
+            var endpointName = document.getElementById('ruleActionEndpoint').value;
+
+            var publicEndpointUrl = '@(app.EndUserDTO.BaseEndpointUrl)/Public/' + endpointName + '?apiKey=@app.EndUserDTO.CurrentApiKey';
+
+            var dataToSend = constructJsonObject(document.getElementById("endUserForm_@(app.TopLevelField.Id.ToString("N"))"));
+            var stringifiedObject = JSON.stringify(dataToSend);
+            fetch(publicEndpointUrl, {
+                method: "POST",
+                body: stringifiedObject
+            })
+                .then((response) => {
+                    if (!response.ok) {
+                        throw Error(response.statusText);
+                    }
+                    return response.json()
+                })
+                .then((data) => {
+                    parsedDto = data;
+                    updateFormValues(parsedDto, document.getElementById("endUserForm_@(app.TopLevelField.Id.ToString("N"))"));
+                }).catch(error => {
+                    console.log(error);
+                });
+        }
+
+        function constructJsonObject(element) {
+            const jsonObject = {};
+
+            function setValueByPath(obj, path, value) {
+                const parts = path.split('.');
+                const lastKey = parts.pop();
+
+                let currentObj = obj;
+                for (var part of parts) {
+                    part = part.replace(/\|/g, '.');
+                    if (!currentObj[part]) {
+                        currentObj[part] = {};
+                    }
+                    currentObj = currentObj[part];
+                }
+                currentObj[lastKey] = value;
+            }
+
+            function traverseElements(parentElement) {
+                const childElements = parentElement.querySelectorAll('[data-json-path]');
+
+                childElements.forEach(childElement => {
+                    const jsonPath = childElement.getAttribute('data-json-path');
+                    const systemName = childElement.getAttribute('data-system-name');
+
+                    if (childElement.tagName === 'INPUT') {
+                        setValueByPath(jsonObject, jsonPath, childElement.value);
+                    } else if (childElement.tagName === 'SELECT') {
+                        setValueByPath(jsonObject, jsonPath, childElement.value.split(':')[0]);
+                    }
+                    traverseElements(childElement);
+                });
+            }
+
+            traverseElements(element);
+            return jsonObject;
+        }
+
+        function updateFormValues(jsonObject, parentElement) {
+
+            function traverseAndUpdate(parentElement) {
+                const childElements = parentElement.querySelectorAll('[data-json-path]');
+
+                childElements.forEach(childElement => {
+                    const jsonPath = childElement.getAttribute('data-json-path');
+                    const systemName = childElement.getAttribute('data-system-name');
+
+                    if (childElement.tagName === 'INPUT' || childElement.tagName === 'SELECT') {
+                        const value = getJsonValueByPath(jsonObject, jsonPath);
+                        if (value !== undefined) {
+                            childElement.value = value;
+                        }
+                    }
+
+                    traverseAndUpdate(childElement);
+                });
+            }
+
+            function getJsonValueByPath(obj, path) {
+                const parts = path.split('.');
+                let currentObj = obj;
+
+                for (var part of parts) {
+                    part = part.replace(/\|/g, '.');
+                    if (!currentObj[part]) {
+                        return undefined;
+                    }
+                    currentObj = currentObj[part];
+                }
+
+                return currentObj;
+            }
+
+            traverseAndUpdate(parentElement);
+        }
+    </script>
+
+
+}

@@ -1,0 +1,73 @@
+.auth-links-dash {
+    position: absolute;
+    top: 15px;
+    right: 5vw;
+    display: flex;
+    z-index: 9998;
+}
+
+    .auth-links-dash a {
+        color: white;
+        background: #507e54;
+        padding: 0.5rem 1rem;
+        border-radius: 10px;
+        margin-left: 0.5rem;
+        text-decoration: none;
+    }
+
+#sidebar {
+    position: absolute;
+    z-index: 9998;
+    border: 2px solid transparent;
+    border-bottom-right-radius: 10px;
+    border-bottom-left-radius: 10px;
+    min-width: 250px;
+}
+
+.sidebar {
+    background: #2a6f4e;
+    padding: 10px;
+    border: 2px solid transparent;
+    border-bottom-right-radius: 10px;
+    border-bottom-left-radius: 10px;
+    min-width: 250px;
+}
+
+code {
+    white-space: pre;
+}
+
+.nav-tabs {
+    border: none;
+}
+
+.CodeMirror {
+    padding-left: 80px; /* adjust this value as needed */
+}
+
+.component-list:empty, .group-name-list:empty {
+    display: none;
+    border: none;
+}
+
+.component-list, .group-name-list {
+    position: absolute;
+    width: max-content;
+    border: 1px solid #ccc;
+    border-top-left-radius: 15px;
+    border-bottom-left-radius: 15px;
+    margin-top: 10px;
+    margin-left: -10px;
+    padding-left: 10px;
+    padding-right: 10px;
+    max-height: 100px; /* Adjust the maximum height as needed. */
+    overflow-y: auto;
+    background-color: #fff;
+    opacity: 1;
+    z-index: 999;
+}
+
+.component-option, .group-name-option {
+    padding: 5px;
+    cursor: pointer;
+}

@@ -1,0 +1,14 @@
+﻿<?xml version='1.0'?>
+<Obfuscator>
+	<Var name="InPath" value="[PLACEHOLDER]" />
+	<Var name="OutPath" value="[PLACEHOLDER]\Obfuscator_Output" />
+	<Var name="HidePrivateApi" value="true" />
+	<Var name="KeyFile" value=".\MyBusinessRules.snk" />
+
+	<Module file="$(InPath)\BusinessRules.UI.dll" />
+	<Module file="$(InPath)\BusinessRules.Data.dll" />
+	<Module file="$(InPath)\BusinessRules.Domain.dll" />
+	<Module file="$(InPath)\BusinessRules.Licensing.dll" />
+	<Module file="$(InPath)\BusinessRules.Rules.dll" />
+	<Module file="$(InPath)\BusinessRules.ServiceLayer.dll" />
+</Obfuscator>
